@@ -13,6 +13,7 @@ class Tile extends Phaser.GameObjects.Image {
 			params.frame
 		)
 		this.speed = 0.3
+		this.scale = 0.45
 		this.setOrigin(0.5, 0.5)
 		this.initAnimation()
 		this.scene.add.existing(this)
@@ -23,7 +24,7 @@ class Tile extends Phaser.GameObjects.Image {
 			frame: ['red', 'yellow', 'green'],
 			lifespan: 1000,
 			speed: { min: 150, max: 250 },
-			scale: { start: 0.8, end: 0 },
+			scale: { start: 0.45, end: 0 },
 			x: 0,
 			y: 0,
 			gravityY: 150,
@@ -41,7 +42,7 @@ class Tile extends Phaser.GameObjects.Image {
 			Math.abs(yCoordinate * CONST.tileHeight + CONST.GAME.START_GRID_Y - this.y) / this.speed
 		this.scene.add.tween({
 			targets: this,
-			x: CONST.tileWidth * xCoordinate + CONST.GAME.START_GRID_X,
+			x: CONST.tileHeight * xCoordinate + CONST.GAME.START_GRID_X,
 			y: CONST.tileHeight * yCoordinate + CONST.GAME.START_GRID_Y,
 			ease: ease,
 			duration: duration,
@@ -57,7 +58,7 @@ class Tile extends Phaser.GameObjects.Image {
 	public clickEffect(callback: Function | undefined = undefined): void {
 		this.scene.add.tween({
 			targets: this,
-			scale: 1.25,
+			scale: 0.7,
 			ease: 'Linear',
 			duration: 100,
 			repeat: 0,
@@ -89,6 +90,16 @@ class Tile extends Phaser.GameObjects.Image {
 			repeat: 5,
 		})
 	}
+	public shakeTile(): void {
+		this.scene.tweens.add({
+			targets: this,
+			x: this.x + CONST.TILE.SHAKE_INTENSITY,
+			y: this.y + CONST.TILE.SHAKE_INTENSITY,
+			duration: 50,
+			yoyo: true,
+			repeat: 5,
+		})
+	}
 	public destroyTile(): void {
 		this.destroyEffect.explode(16)
 		this.destroyEffect.setPosition(this.x, this.y)
@@ -106,7 +117,7 @@ class Tile extends Phaser.GameObjects.Image {
 	}
 	public resetTile(): void {
 		this.angle = 0
-		this.scale = 1
+		this.scale = 0.45
 	}
 }
 export default Tile

@@ -4,62 +4,62 @@
 			{
 				"type": "image",
 				"key": "cookie1",
-				"url": "assets/images/cookie1.png"
+				"url": "assets/images2/1.png"
 			},
 			{
 				"type": "image",
 				"key": "cookie2",
-				"url": "assets/images/cookie2.png"
+				"url": "assets/images2/2.png"
 			},
 			{
 				"type": "image",
 				"key": "croissant",
-				"url": "assets/images/croissant.png"
+				"url": "assets/images2/3.png"
 			},
 			{
 				"type": "image",
 				"key": "cupcake",
-				"url": "assets/images/cupcake.png"
+				"url": "assets/images2/4.png"
 			},
 			{
 				"type": "image",
 				"key": "donut",
-				"url": "assets/images/donut.png"
+				"url": "assets/images2/5.png"
 			},
 			{
 				"type": "image",
 				"key": "eclair",
-				"url": "assets/images/eclair.png"
+				"url": "assets/images2/6.png"
 			},
 			{
 				"type": "image",
 				"key": "macaroon",
-				"url": "assets/images/macaroon.png"
+				"url": "assets/images2/7.png"
 			},
 			{
 				"type": "image",
 				"key": "pie",
-				"url": "assets/images/pie.png"
+				"url": "assets/images2/8.png"
 			},
 			{
 				"type": "image",
 				"key": "poptart1",
-				"url": "assets/images/poptart1.png"
+				"url": "assets/images2/9.png"
 			},
 			{
 				"type": "image",
 				"key": "poptart2",
-				"url": "assets/images/poptart2.png"
+				"url": "assets/images2/10.png"
 			},
 			{
 				"type": "image",
 				"key": "starcookie1",
-				"url": "assets/images/starcookie1.png"
+				"url": "assets/images2/11.png"
 			},
 			{
 				"type": "image",
 				"key": "starcookie2",
-				"url": "assets/images/starcookie2.png"
+				"url": "assets/images2/12.png"
 			}
 		]
 	}

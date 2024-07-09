@@ -42,22 +42,17 @@ class BootScene extends Phaser.Scene {
 		// load out package
 
 		this.load.pack('preload', 'assets/pack.json', 'preload')
-		this.load.spritesheet('smokeEffect', 'assets/effects/smokeEffect.png', {
-			frameWidth: 20,
-			frameHeight: 20,
-		})
+		// this.load.spritesheet('smokeEffect', 'assets/effects/smokeEffect.png', {
+		// 	frameWidth: 20,
+		// 	frameHeight: 20,
+		// })
 		this.load.atlas('flares', 'assets/particles/flares.png', 'assets/particles/flares.json')
+		this.load.image('grid0', 'assets/grids/1.png')
+		this.load.image('grid1', 'assets/grids/2.png')
+		this.load.image('grid2', 'assets/grids/3.png')
+		this.load.image('bg', 'assets/bg.png')
 	}
-	create() {
-		this.anims.create({
-			key: 'smokeEffect',
-			frames: this.anims.generateFrameNumbers('smokeEffect', {
-				start: 0,
-				end: 5,
-			}),
-			frameRate: 20,
-		})
-	}
+	create() {}
 
 	update(): void {
 		this.scene.start('GameScene')

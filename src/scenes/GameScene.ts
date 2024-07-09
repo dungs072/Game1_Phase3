@@ -9,6 +9,7 @@ class GameScene extends Phaser.Scene {
 		})
 	}
 	create() {
+		this.add.image(0, 0, 'bg')
 		this.gameController = new GameController(this)
 	}
 	update(time: number, deltaNumber: number) {

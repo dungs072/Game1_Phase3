@@ -2,11 +2,13 @@ import { Scene } from 'phaser'
 import Tile from '../objects/Tile'
 import { CONST } from '../const/const'
 import Shuffle from './Shuffle'
+import GridTile from '../objects/GridTile'
 
 class GameController {
 	private scene: Scene
 	private canMove: boolean
 	private maxTimeToTriggerIdle: number
+	private maxTimeToTriggerHint: number
 	private shuffle: Shuffle
 
 	private countTile: number
@@ -17,25 +19,42 @@ class GameController {
 	// Selected Tiles
 	private firstSelectedTile: Tile | undefined
 	private secondSelectedTile: Tile | undefined
-	private selectedRectangle: Phaser.GameObjects.Graphics
+	private selectedTile: Phaser.GameObjects.Image
 	private isDragging: boolean
 
 	constructor(scene: Scene) {
 		this.scene = scene
 		this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
-
+		this.maxTimeToTriggerHint = CONST.GAME.MAX_TIME_TRIGGER_HINT
+		this.initGrid()
 		this.initGame()
 		this.initInput()
+	}
+	private initGrid(): void {
+		let flag = false
+		for (let y = 0; y < CONST.gridHeight; y++) {
+			for (let x = 0; x < CONST.gridWidth; x++) {
+				new GridTile({
+					scene: this.scene,
+					x: x * CONST.tileWidth,
+					y: y * CONST.tileHeight,
+					texture: flag ? 'grid1' : 'grid2',
+				})
+				flag = !flag
+			}
+			flag = !flag
+		}
 	}
 	private initInput(): void {
 		this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
 			const gameObject = this.getTile(pointer.worldX, pointer.worldY)
 			if (!gameObject) return
-			this.isDragging = true
 			this.tileDown(pointer, gameObject)
+			this.isDragging = true
 		})
 		this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
 			if (!this.isDragging) return
+			if (this.secondSelectedTile) return
 			this.secondSelectedTile = this.getTile(pointer.worldX, pointer.worldY)
 			if (this.secondSelectedTile == this.firstSelectedTile) {
 				this.secondSelectedTile = undefined
@@ -43,6 +62,7 @@ class GameController {
 			}
 			if (this.secondSelectedTile == undefined) return
 			if (this.firstSelectedTile == undefined) return
+			this.selectedTile.setVisible(false)
 			const dx = Math.abs(this.firstSelectedTile.x - this.secondSelectedTile.x) / CONST.tileWidth
 			const dy = Math.abs(this.firstSelectedTile.y - this.secondSelectedTile.y) / CONST.tileHeight
 			if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
@@ -119,20 +139,25 @@ class GameController {
 			}
 		})
 
-		this.selectedRectangle = this.scene.add.graphics()
-		this.selectedRectangle.lineStyle(2, 0x62dff5, 1)
-		this.selectedRectangle.strokeRect(0, 0, CONST.tileWidth, CONST.tileHeight)
-		this.selectedRectangle.setVisible(false)
+		this.selectedTile = this.scene.add.image(0, 0, 'grid0')
+		this.selectedTile.scale = 0.4
+		this.selectedTile.setVisible(false)
 
 		// Selected Tiles
 		this.firstSelectedTile = undefined
 		this.secondSelectedTile = undefined
 	}
 	public update(deltaTime: number): void {
-		this.maxTimeToTriggerIdle -= deltaTime
-		if (this.maxTimeToTriggerIdle <= 0) {
-			this.triggerIdleTiles()
-			this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
+		// this.maxTimeToTriggerIdle -= deltaTime
+		// if (this.maxTimeToTriggerIdle <= 0) {
+		// 	this.triggerIdleTiles()
+		// 	this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
+		// }
+
+		this.maxTimeToTriggerHint -= deltaTime
+		if (this.maxTimeToTriggerHint <= 0) {
+			this.triggerHint()
+			this.maxTimeToTriggerHint = CONST.GAME.MAX_TIME_TRIGGER_HINT
 		}
 	}
 	private triggerIdleTiles(): void {
@@ -187,6 +212,8 @@ class GameController {
 			this.stopIdle()
 			if (!this.firstSelectedTile) {
 				this.firstSelectedTile = gameobject
+				this.selectedTile.setPosition(gameobject.x, gameobject.y)
+				this.selectedTile.setVisible(true)
 				this.canMove = false
 
 				this.firstSelectedTile.clickEffect(() => {
@@ -195,6 +222,7 @@ class GameController {
 			} else {
 				// So if we are here, we must have selected a second tile
 				this.secondSelectedTile = gameobject
+				this.selectedTile.setVisible(false)
 				if (this.secondSelectedTile == this.firstSelectedTile) {
 					this.firstSelectedTile = this.secondSelectedTile = undefined
 					return
@@ -209,6 +237,7 @@ class GameController {
 					this.swapTiles()
 				} else {
 					this.firstSelectedTile = gameobject
+					this.secondSelectedTile = undefined
 					this.canMove = false
 					this.firstSelectedTile.clickEffect(() => {
 						this.canMove = true
@@ -486,6 +515,76 @@ class GameController {
 		}
 
 		return matches
+	}
+	private getHint(): Tile[][] {
+		let matches: Tile[][] = []
+		for (let y = 0; y < this.tileGrid.length; y++) {
+			for (let x = 0; x < this.tileGrid[y].length; x++) {
+				const tile1 = this.tileGrid[y][x]
+				if (!tile1) continue
+				if (x - 1 >= 0) {
+					// swap left
+					this.swapMemoryTiles(x, y, x - 1, y)
+					matches = this.getMatches(this.tileGrid)
+					if (matches.length > 0) {
+						return matches
+					} else {
+						console.log('hehe')
+
+						this.swapMemoryTiles(x, y, x - 1, y)
+					}
+				}
+				if (x + 1 < CONST.gridWidth) {
+					this.swapMemoryTiles(x, y, x + 1, y)
+					matches = this.getMatches(this.tileGrid)
+					if (matches.length > 0) {
+						return matches
+					} else {
+						this.swapMemoryTiles(x, y, x + 1, y)
+					}
+				}
+				if (y - 1 >= 0) {
+					this.swapMemoryTiles(x, y, x, y - 1)
+					matches = this.getMatches(this.tileGrid)
+					if (matches.length > 0) {
+						return matches
+					} else {
+						this.swapMemoryTiles(x, y, x, y - 1)
+					}
+				}
+				if (y + 1 < CONST.gridHeight) {
+					//swap down
+					this.swapMemoryTiles(x, y, x, y + 1)
+					matches = this.getMatches(this.tileGrid)
+					if (matches.length > 0) {
+						return matches
+					} else {
+						this.swapMemoryTiles(x, y, x, y + 1)
+					}
+				}
+			}
+		}
+		return matches
+	}
+	private swapMemoryTiles(x1: number, y1: number, x2: number, y2: number): void {
+		const tempTile = this.tileGrid[y1][x1]
+		this.tileGrid[y1][x1] = this.tileGrid[y2][x2]
+		this.tileGrid[y2][x2] = tempTile
+	}
+
+	private triggerHint(): void {
+		const matches = this.getHint()
+		console.log(matches)
+
+		if (matches.length > 0) {
+			for (let y = 0; y < matches.length; y++) {
+				for (let x = 0; x < matches[y].length; x++) {
+					const tile = this.tileGrid[y][x]
+					if (!tile) continue
+					tile.shakeTile()
+				}
+			}
+		}
 	}
 }
 export default GameController

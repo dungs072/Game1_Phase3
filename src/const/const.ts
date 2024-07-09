@@ -3,8 +3,8 @@ export let CONST = {
 	highscore: 0,
 	gridWidth: 8,
 	gridHeight: 8,
-	tileWidth: 64,
-	tileHeight: 72,
+	tileWidth: 67,
+	tileHeight: 67,
 	candyTypes: [
 		'cookie1',
 		'cookie2',
@@ -25,7 +25,8 @@ export let CONST = {
 
 	GAME: {
 		MAX_TIME_TRIGGER_IDLE: 15,
-		START_GRID_X: 90,
+		MAX_TIME_TRIGGER_HINT: 5,
+		START_GRID_X: 85,
 		START_GRID_Y: 125,
 	},
 
