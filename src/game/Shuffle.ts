@@ -17,7 +17,7 @@ class Shuffle {
 			targets: this.circle,
 			radius: 228,
 			ease: 'Quintic.easeInOut',
-			duration: 2000,
+			duration: 500,
 			yoyo: true,
 			repeat: 0,
 			onUpdate: () => {

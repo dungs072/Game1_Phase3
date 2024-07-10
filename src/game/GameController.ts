@@ -3,6 +3,7 @@ import Tile from '../objects/Tile'
 import { CONST } from '../const/const'
 import Shuffle from './Shuffle'
 import GridTile from '../objects/GridTile'
+import MatchesManager from '../objects/MatchesManager'
 
 class GameController {
 	private scene: Scene
@@ -12,6 +13,8 @@ class GameController {
 	private shuffle: Shuffle
 
 	private countTile: number
+
+	private previousHoverTile: Tile
 
 	// Grid with tiles
 	private tileGrid: (Tile | undefined)[][] = []
@@ -24,8 +27,7 @@ class GameController {
 
 	constructor(scene: Scene) {
 		this.scene = scene
-		this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
-		this.maxTimeToTriggerHint = CONST.GAME.MAX_TIME_TRIGGER_HINT
+
 		this.initGrid()
 		this.initGame()
 		this.initInput()
@@ -53,7 +55,19 @@ class GameController {
 			this.isDragging = true
 		})
 		this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-			if (!this.isDragging) return
+			if (!this.isDragging) {
+				const tile = this.getTile(pointer.worldX, pointer.worldY)
+				if (this.previousHoverTile && tile != this.previousHoverTile) {
+					this.previousHoverTile.hoverOut()
+				}
+
+				if (tile) {
+					tile.hoverIn()
+					this.previousHoverTile = tile
+				}
+
+				return
+			}
 			if (this.secondSelectedTile) return
 			this.secondSelectedTile = this.getTile(pointer.worldX, pointer.worldY)
 			if (this.secondSelectedTile == this.firstSelectedTile) {
@@ -102,6 +116,7 @@ class GameController {
 	}
 	private initGame(): void {
 		// Init variables
+		this.resetAllIdleAndHint()
 		this.canMove = true
 		this.shuffle = new Shuffle(this.scene)
 		this.countTile = CONST.gridHeight * CONST.gridWidth
@@ -114,7 +129,9 @@ class GameController {
 		for (let y = 0; y < CONST.gridHeight; y++) {
 			this.tileGrid[y] = []
 			for (let x = 0; x < CONST.gridWidth; x++) {
-				this.tileGrid[y][x] = this.addTile(x, y)
+				let tile = this.addTile(x, y)
+				if (!tile) continue
+				this.tileGrid[y][x] = tile
 				this.shuffle.addTile(this.tileGrid[y][x]!)
 			}
 		}
@@ -130,7 +147,7 @@ class GameController {
 							if (this.countTile == 0) {
 								this.checkMatches()
 							} else {
-								this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
+								this.resetAllIdleAndHint()
 							}
 						},
 						'EaseInOutElastic'
@@ -140,7 +157,8 @@ class GameController {
 		})
 
 		this.selectedTile = this.scene.add.image(0, 0, 'grid0')
-		this.selectedTile.scale = 0.4
+		this.selectedTile.scale = 0.45
+		this.selectedTile.setDepth(0)
 		this.selectedTile.setVisible(false)
 
 		// Selected Tiles
@@ -148,22 +166,27 @@ class GameController {
 		this.secondSelectedTile = undefined
 	}
 	public update(deltaTime: number): void {
-		// this.maxTimeToTriggerIdle -= deltaTime
-		// if (this.maxTimeToTriggerIdle <= 0) {
-		// 	this.triggerIdleTiles()
-		// 	this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
-		// }
-
-		this.maxTimeToTriggerHint -= deltaTime
-		if (this.maxTimeToTriggerHint <= 0) {
-			this.triggerHint()
-			this.maxTimeToTriggerHint = CONST.GAME.MAX_TIME_TRIGGER_HINT
+		this.maxTimeToTriggerIdle -= deltaTime
+		if (this.maxTimeToTriggerIdle <= 0) {
+			this.triggerIdleTiles()
+			this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
 		}
+		// this.maxTimeToTriggerHint -= deltaTime
+		// if (this.maxTimeToTriggerHint <= 0) {
+		// 	this.triggerHint()
+		// 	this.maxTimeToTriggerHint = CONST.GAME.MAX_TIME_TRIGGER_HINT
+		// }
 	}
 	private triggerIdleTiles(): void {
+		let i = 0
 		for (let y = 0; y < CONST.gridHeight; y++) {
 			for (let x = 0; x < CONST.gridWidth; x++) {
-				this.tileGrid[y][x]?.triggerIdleTile()
+				this.tileGrid[y][x]?.triggerIdleTile(i)
+				i++
+
+				if (i % 12 === 0) {
+					i = 0
+				}
 			}
 		}
 	}
@@ -175,8 +198,8 @@ class GameController {
 			}
 		}
 	}
-	private stopIdle(): void {
-		this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
+	private stopIdleAndHint(): void {
+		this.resetAllIdleAndHint()
 		this.clearTweens()
 	}
 
@@ -187,16 +210,19 @@ class GameController {
 	 */
 	private addTile(x: number, y: number): Tile {
 		// Get a random tile
-		let randomTileType: string =
-			CONST.candyTypes[Phaser.Math.RND.between(0, CONST.candyTypes.length - 1)]
+		const randomTileType: string =
+			CONST.candyTypes[Phaser.Math.RND.between(0, CONST.candyTypes.length - 8)]
 
 		// Return the created tile
-		return new Tile({
-			scene: this.scene,
-			x: x * CONST.tileWidth,
-			y: y * CONST.tileHeight,
-			texture: randomTileType,
-		})
+		return new Tile(
+			{
+				scene: this.scene,
+				x: x * CONST.tileWidth,
+				y: y * CONST.tileHeight,
+				texture: randomTileType,
+			},
+			randomTileType
+		)
 	}
 
 	/**
@@ -209,7 +235,7 @@ class GameController {
 	 */
 	private tileDown(pointer: Phaser.Input.Pointer, gameobject: Tile): void {
 		if (this.canMove) {
-			this.stopIdle()
+			this.stopIdleAndHint()
 			if (!this.firstSelectedTile) {
 				this.firstSelectedTile = gameobject
 				this.selectedTile.setPosition(gameobject.x, gameobject.y)
@@ -242,6 +268,8 @@ class GameController {
 					this.firstSelectedTile.clickEffect(() => {
 						this.canMove = true
 					})
+					this.selectedTile.setPosition(gameobject.x, gameobject.y)
+					this.selectedTile.setVisible(true)
 				}
 			}
 		}
@@ -307,23 +335,13 @@ class GameController {
 	}
 
 	private checkMatches(): void {
-		//Call the getMatches function to check for spots where there is
-		//a run of three or more tiles in a row
 		const matches = this.getMatches(this.tileGrid)
-
-		//If there are matches, remove them
 		if (matches.length > 0) {
-			this.stopIdle()
-			//Remove the tiles
+			this.stopIdleAndHint()
 			this.removeTileGroup(matches)
-			// Move the tiles currently on the board into their new positions
-			this.resetAndFillTile()
-			//Fill the board with new tiles wherever there is an empty spot
-			//this.fillTile()
+			//this.resetAndFillTile()
 			this.tileUp()
-			//this.canMove = true
 		} else {
-			// No match so just swap the tiles back to their original position and reset
 			this.swapTiles()
 			this.tileUp()
 			this.canMove = true
@@ -375,6 +393,7 @@ class GameController {
 				let tempTile = this.tileGrid[i][key]
 				this.tileGrid[i][key] = this.tileGrid[j][key]
 				this.tileGrid[j][key] = tempTile
+
 				j--
 			}
 			for (let i = j; i >= 0; i--) {
@@ -393,31 +412,39 @@ class GameController {
 	}
 
 	private tileUp(): void {
-		// Reset active tiles
 		this.firstSelectedTile = undefined
 		this.secondSelectedTile = undefined
 	}
 
 	private removeTileGroup(matches: Tile[][]): void {
 		if (!this.tileGrid) return
-		// Loop through all the matches and remove the associated tiles
-		for (var i = 0; i < matches.length; i++) {
-			var tempArr = matches[i]
-
-			for (var j = 0; j < tempArr.length; j++) {
-				let tile = tempArr[j]
-
-				//Find where this tile lives in the theoretical grid
-				let tilePos = this.getTilePos(this.tileGrid, tile)
-
-				// Remove the tile from the theoretical grid
-				if (tilePos.x !== -1 && tilePos.y !== -1) {
-					//tile.toggleDestroyEffect(true)
-					tile.destroyTile()
-					this.tileGrid[tilePos.y][tilePos.x] = undefined
-				}
+		const matchesManager = new MatchesManager()
+		for (let i = 0; i < matches.length; i++) {
+			let tempArr = matches[i]
+			for (let j = 0; j < tempArr.length; j++) {
+				const tile = tempArr[j]
+				matchesManager.addTile(tile)
 			}
 		}
+		matchesManager.refactorMatch()
+		matchesManager.matchAndRemoveTiles(this.tileGrid, () => {
+			this.resetAndFillTile()
+		})
+		// matchesManager.playTween()
+		// return
+
+		// for (let i = 0; i < matches.length; i++) {
+		// 	const tempArr = matches[i]
+
+		// 	for (let j = 0; j < tempArr.length; j++) {
+		// 		const tile = tempArr[j]
+		// 		const tilePos = this.getTilePos(this.tileGrid, tile)
+		// 		if (tilePos.x !== -1 && tilePos.y !== -1) {
+		// 			tile.destroyTile()
+		// 			this.tileGrid[tilePos.y][tilePos.x] = undefined
+		// 		}
+		// 	}
+		// }
 	}
 
 	private getTilePos(tileGrid: (Tile | undefined)[][], tile: Tile): any {
@@ -522,48 +549,25 @@ class GameController {
 			for (let x = 0; x < this.tileGrid[y].length; x++) {
 				const tile1 = this.tileGrid[y][x]
 				if (!tile1) continue
-				if (x - 1 >= 0) {
-					// swap left
-					this.swapMemoryTiles(x, y, x - 1, y)
-					matches = this.getMatches(this.tileGrid)
-					if (matches.length > 0) {
-						return matches
-					} else {
-						console.log('hehe')
-
-						this.swapMemoryTiles(x, y, x - 1, y)
-					}
-				}
 				if (x + 1 < CONST.gridWidth) {
 					this.swapMemoryTiles(x, y, x + 1, y)
 					matches = this.getMatches(this.tileGrid)
+					this.swapMemoryTiles(x, y, x + 1, y)
 					if (matches.length > 0) {
 						return matches
-					} else {
-						this.swapMemoryTiles(x, y, x + 1, y)
-					}
-				}
-				if (y - 1 >= 0) {
-					this.swapMemoryTiles(x, y, x, y - 1)
-					matches = this.getMatches(this.tileGrid)
-					if (matches.length > 0) {
-						return matches
-					} else {
-						this.swapMemoryTiles(x, y, x, y - 1)
 					}
 				}
 				if (y + 1 < CONST.gridHeight) {
-					//swap down
 					this.swapMemoryTiles(x, y, x, y + 1)
 					matches = this.getMatches(this.tileGrid)
+					this.swapMemoryTiles(x, y, x, y + 1)
 					if (matches.length > 0) {
 						return matches
-					} else {
-						this.swapMemoryTiles(x, y, x, y + 1)
 					}
 				}
 			}
 		}
+
 		return matches
 	}
 	private swapMemoryTiles(x1: number, y1: number, x2: number, y2: number): void {
@@ -574,17 +578,32 @@ class GameController {
 
 	private triggerHint(): void {
 		const matches = this.getHint()
-		console.log(matches)
-
 		if (matches.length > 0) {
 			for (let y = 0; y < matches.length; y++) {
 				for (let x = 0; x < matches[y].length; x++) {
-					const tile = this.tileGrid[y][x]
+					const tile = matches[y][x]
 					if (!tile) continue
 					tile.shakeTile()
 				}
 			}
+		} else {
+			this.destroyAllTiles()
+			this.initGame()
 		}
+	}
+	private destroyAllTiles(): void {
+		for (let y = 0; y < this.tileGrid.length; y++) {
+			for (let x = 0; x < this.tileGrid[y].length; x++) {
+				const tile = this.tileGrid[y][x]
+				if (!tile) continue
+				this.shuffle.removeTile(tile)
+				tile.destroyTile()
+			}
+		}
+	}
+	private resetAllIdleAndHint(): void {
+		this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
+		this.maxTimeToTriggerHint = CONST.GAME.MAX_TIME_TRIGGER_HINT
 	}
 }
 export default GameController

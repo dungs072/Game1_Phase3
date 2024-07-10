@@ -10,7 +10,7 @@ class GridTile extends Phaser.GameObjects.Image {
 			params.texture,
 			params.frame
 		)
-		this.scale = 0.4
+		this.scale = 0.45
 		this.scene.add.existing(this)
 	}
 }

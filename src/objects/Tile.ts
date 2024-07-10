@@ -1,10 +1,16 @@
 import { CONST } from '../const/const'
 import { ImageConstructor } from '../interfaces/image.interface'
+import Utils from '../utils/Utils'
 
-class Tile extends Phaser.GameObjects.Image {
+class Tile extends Phaser.GameObjects.Sprite {
 	private speed: number
 	private destroyEffect: Phaser.GameObjects.Particles.ParticleEmitter
-	constructor(params: ImageConstructor) {
+	private glow: Phaser.FX.Glow | undefined
+	private typeTile: string
+	private matchCount: number
+	private isHorizontal: boolean
+
+	constructor(params: ImageConstructor, typeTile: string) {
 		super(
 			params.scene,
 			params.x + CONST.GAME.START_GRID_X,
@@ -12,11 +18,48 @@ class Tile extends Phaser.GameObjects.Image {
 			params.texture,
 			params.frame
 		)
+		this.typeTile = typeTile
 		this.speed = 0.3
 		this.scale = 0.45
+		this.matchCount = 0
 		this.setOrigin(0.5, 0.5)
 		this.initAnimation()
+		this.initGlow()
+		this.setDepth(1)
 		this.scene.add.existing(this)
+	}
+	public setHorizontal(state: boolean): void {
+		this.isHorizontal = state
+	}
+	public getHorizontal(): boolean {
+		return this.isHorizontal
+	}
+	public setMatchCount(value: number): void {
+		this.matchCount = value
+		const lowColor = '#0000ff'
+		const highColor = '#ff0000'
+		const maxMatchCount = 10
+		const factor = Phaser.Math.Clamp(value / maxMatchCount, 0, 1)
+
+		const interpolatedColor = Utils.interpolateColor(lowColor, highColor, factor)
+		if (this.glow) {
+			this.glow.color = interpolatedColor
+		}
+	}
+	public getMatchCount(): number {
+		return this.matchCount
+	}
+	public hasSameTypeTile(otherTypeTile: string): boolean {
+		return this.typeTile == otherTypeTile
+	}
+	public getTypeTile(): string {
+		return this.typeTile
+	}
+	public getCoordinateX(): number {
+		return (this.x - CONST.GAME.START_GRID_X) / CONST.tileWidth
+	}
+	public getCoordinateY(): number {
+		return (this.y - CONST.GAME.START_GRID_Y) / CONST.tileHeight
 	}
 
 	private initAnimation(): void {
@@ -32,15 +75,24 @@ class Tile extends Phaser.GameObjects.Image {
 			emitting: false,
 		})
 	}
+	private initGlow(): void {
+		this.preFX?.setPadding(50)
+		this.glow = this.preFX?.addGlow()
+		this.toggleGlow(false)
+	}
 	public moveToTarget(
 		xCoordinate: number,
 		yCoordinate: number,
 		callback: Function | undefined = undefined,
 		ease = 'Linear'
-	): void {
-		const duration =
+	): Phaser.Tweens.Tween {
+		let duration =
 			Math.abs(yCoordinate * CONST.tileHeight + CONST.GAME.START_GRID_Y - this.y) / this.speed
-		this.scene.add.tween({
+		if (this.getCoordinateY() == yCoordinate) {
+			duration =
+				Math.abs(xCoordinate * CONST.tileWidth + CONST.GAME.START_GRID_X - this.x) / this.speed
+		}
+		return this.scene.add.tween({
 			targets: this,
 			x: CONST.tileHeight * xCoordinate + CONST.GAME.START_GRID_X,
 			y: CONST.tileHeight * yCoordinate + CONST.GAME.START_GRID_Y,
@@ -70,24 +122,25 @@ class Tile extends Phaser.GameObjects.Image {
 			},
 		})
 	}
-	public triggerIdleTile(): void {
-		// this.scene.tweens.add({
-		// 	targets: this,
-		// 	angle: { from: 0, to: 360 },
-		// 	ease: 'EaseInOutCubic',
-		// 	duration: 1000,
-		// 	repeat: 0,
-		// 	yoyo: false,
-		// })
-		const randomX = Phaser.Math.Between(-CONST.TILE.SHAKE_INTENSITY, CONST.TILE.SHAKE_INTENSITY)
-		const randomY = Phaser.Math.Between(-CONST.TILE.SHAKE_INTENSITY, CONST.TILE.SHAKE_INTENSITY)
+	public triggerIdleTile(index: number): void {
 		this.scene.tweens.add({
 			targets: this,
-			x: this.x + randomX,
-			y: this.y + randomY,
-			duration: 50,
+			scale: 0.6,
+			ease: 'sine.inout',
+			duration: 300,
+			delay: index * 50,
+			repeat: 0,
 			yoyo: true,
-			repeat: 5,
+		})
+	}
+	public test(): void {
+		this.scene.tweens.add({
+			targets: this,
+			angle: { from: 0, to: 360 },
+			ease: 'EaseInOutCubic',
+			duration: 1000,
+			repeat: -1,
+			yoyo: true,
 		})
 	}
 	public shakeTile(): void {
@@ -99,6 +152,40 @@ class Tile extends Phaser.GameObjects.Image {
 			yoyo: true,
 			repeat: 5,
 		})
+	}
+	public hoverIn(): void {
+		this.scene.tweens.add({
+			targets: this,
+			scale: CONST.TILE.HOVER_SCALE,
+			duration: 50,
+			yoyo: false,
+			repeat: 0,
+		})
+	}
+	public hoverOut(): void {
+		if (!this.scene) {
+			return
+		}
+		this.scene.tweens.add({
+			targets: this,
+			scale: 0.45,
+			duration: 50,
+			yoyo: false,
+			repeat: 0,
+		})
+	}
+	public toggleGlow(state: boolean): void {
+		if (!this.glow) return
+		this.glow.setActive(state)
+		if (state) {
+			this.scene.tweens.add({
+				targets: this.glow,
+				outerStrength: 20,
+				yoyo: true,
+				loop: -1,
+				ease: 'sine.inout',
+			})
+		}
 	}
 	public destroyTile(): void {
 		this.destroyEffect.explode(16)
