@@ -255,7 +255,7 @@ class GameController {
 	private addTile(x: number, y: number): Tile {
 		// Get a random tile
 		const randomTileType: string =
-			CONST.candyTypes[Phaser.Math.RND.between(0, CONST.candyTypes.length - 12)]
+			CONST.candyTypes[Phaser.Math.RND.between(0, CONST.candyTypes.length - 9)]
 
 		// Return the created tile
 		return new Tile(
@@ -466,7 +466,7 @@ class GameController {
 
 	private removeTileGroup(matches: Tile[][]): void {
 		if (!this.tileGrid) return
-		const matchesManager = new MatchesManager()
+		const matchesManager = new MatchesManager(this.tileGrid)
 		for (let i = 0; i < matches.length; i++) {
 			let tempArr = matches[i]
 			for (let j = 0; j < tempArr.length; j++) {

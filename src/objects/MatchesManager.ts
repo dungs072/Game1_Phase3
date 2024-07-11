@@ -3,8 +3,10 @@ import Tile from './Tile'
 
 class MatchesManager {
 	private matchLists: MatchList[]
-	constructor() {
-		this.matchLists = [new MatchList()]
+	private tileGrid: (Tile | undefined)[][]
+	constructor(tileGrid: (Tile | undefined)[][]) {
+		this.tileGrid = tileGrid
+		this.matchLists = [new MatchList(this.tileGrid)]
 	}
 	public addTile(tile: Tile) {
 		for (let i = 0; i < this.matchLists.length; i++) {
@@ -12,7 +14,7 @@ class MatchesManager {
 				return
 			}
 		}
-		const matchList = new MatchList()
+		const matchList = new MatchList(this.tileGrid)
 		matchList.addTile(tile)
 		this.matchLists.push(matchList)
 	}

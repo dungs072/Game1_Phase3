@@ -5,8 +5,11 @@ import Tile from './Tile'
 class MatchList {
 	private tiles: Tile[]
 	private countTile: number
-	constructor() {
+	private centerTile: Tile
+	private tileGrid: (Tile | undefined)[][]
+	constructor(tileGrid: (Tile | undefined)[][]) {
 		this.tiles = []
+		this.tileGrid = tileGrid
 	}
 	public getTiles(): Tile[] {
 		return this.tiles
@@ -14,6 +17,7 @@ class MatchList {
 	public addTile(tile: Tile): boolean {
 		if (this.tiles.length == 0) {
 			this.tiles.push(tile)
+			this.centerTile = tile
 			return true
 		} else {
 			if (this.tiles.includes(tile)) {
@@ -22,6 +26,7 @@ class MatchList {
 			for (let i = 0; i < this.tiles.length; i++) {
 				if (this.canMatch(this.tiles[i], tile)) {
 					this.tiles.push(tile)
+					this.centerTile = this.findCenter(this.tileGrid, this.tiles)
 					return true
 				}
 			}
@@ -31,30 +36,35 @@ class MatchList {
 	}
 	private canMatch(originalTile: Tile, otherTile: Tile): boolean {
 		if (originalTile.hasSameTypeTile(otherTile.getTypeTile())) {
-			// check right
 			if (
-				originalTile.getCoordinateX() + 1 == otherTile.getCoordinateX() &&
-				originalTile.getCoordinateY() == otherTile.getCoordinateY()
+				otherTile.getCoordinateX() == this.centerTile.getCoordinateX() ||
+				otherTile.getCoordinateY() == this.centerTile.getCoordinateY()
 			) {
-				return true
-			}
-			if (
-				originalTile.getCoordinateX() == otherTile.getCoordinateX() &&
-				originalTile.getCoordinateY() + 1 == otherTile.getCoordinateY()
-			) {
-				return true
-			}
-			if (
-				originalTile.getCoordinateX() - 1 == otherTile.getCoordinateX() &&
-				originalTile.getCoordinateY() == otherTile.getCoordinateY()
-			) {
-				return true
-			}
-			if (
-				originalTile.getCoordinateX() == otherTile.getCoordinateX() &&
-				originalTile.getCoordinateY() - 1 == otherTile.getCoordinateY()
-			) {
-				return true
+				// check right
+				if (
+					originalTile.getCoordinateX() + 1 == otherTile.getCoordinateX() &&
+					originalTile.getCoordinateY() == otherTile.getCoordinateY()
+				) {
+					return true
+				}
+				if (
+					originalTile.getCoordinateX() == otherTile.getCoordinateX() &&
+					originalTile.getCoordinateY() + 1 == otherTile.getCoordinateY()
+				) {
+					return true
+				}
+				if (
+					originalTile.getCoordinateX() - 1 == otherTile.getCoordinateX() &&
+					originalTile.getCoordinateY() == otherTile.getCoordinateY()
+				) {
+					return true
+				}
+				if (
+					originalTile.getCoordinateX() == otherTile.getCoordinateX() &&
+					originalTile.getCoordinateY() - 1 == otherTile.getCoordinateY()
+				) {
+					return true
+				}
 			}
 		}
 		return false
@@ -265,7 +275,7 @@ class MatchList {
 			if (isVertical && isHorizontal) {
 				count++
 			}
-			if (count >= maxCount) {
+			if (count > maxCount) {
 				maxCount = count
 				centerTile = tile
 			}
