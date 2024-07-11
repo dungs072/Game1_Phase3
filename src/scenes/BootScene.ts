@@ -51,6 +51,12 @@ class BootScene extends Phaser.Scene {
 		this.load.image('grid1', 'assets/grids/2.png')
 		this.load.image('grid2', 'assets/grids/3.png')
 		this.load.image('bg', 'assets/bg.png')
+		this.load.image('bprogressbar', 'assets/ui/progress/bar_1.png')
+		this.load.image('fprogressbar', 'assets/ui/progress/bar_2.png')
+		this.load.image('panel', 'assets/ui/panel/f.png')
+
+		this.load.image('star', 'assets/particles/star4.png')
+		this.load.image('jelly', 'assets/jelly/jellyYellow.png')
 	}
 	create() {}
 

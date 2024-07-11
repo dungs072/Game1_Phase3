@@ -24,10 +24,10 @@ export let CONST = {
 	MAX_HEIGHT: 768,
 
 	GAME: {
-		MAX_TIME_TRIGGER_IDLE: 3,
+		MAX_TIME_TRIGGER_IDLE: 17,
 		MAX_TIME_TRIGGER_HINT: 5,
 		START_GRID_X: 85,
-		START_GRID_Y: 125,
+		START_GRID_Y: 200,
 	},
 
 	TILE: {
@@ -36,5 +36,13 @@ export let CONST = {
 	},
 	MATCH: {
 		SIZE_BOOM: 2,
+	},
+	UI: {
+		PROGRESS_X: 40,
+		PROGRESS_Y: 50,
+	},
+	SCORE: {
+		ADD_SCORE_EVENT: 'addscoreevent',
+		FINISH_TARGET_EVENT: 'finishevent',
 	},
 }

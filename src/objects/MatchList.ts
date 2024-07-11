@@ -1,4 +1,5 @@
 import { CONST } from '../const/const'
+import ScoreManager from '../score/ScoreManager'
 import Tile from './Tile'
 
 class MatchList {
@@ -68,17 +69,14 @@ class MatchList {
 			const tile = this.tiles[i]
 			if (tile.getMatchCount() == 4) {
 				this.handleBoomMatchFour(tile, tileGrid)
-				return
-			} else if (tile.getMatchCount() == 5) {
+			} else if (tile.getMatchCount() >= 5) {
 				this.handleBoomMatchFive(tileGrid)
-				return
+			} else {
+				tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
+				tile.destroyTile()
 			}
 		}
-		for (let i = this.tiles.length - 1; i >= 0; i--) {
-			const tile = this.tiles[i]
-			tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
-			tile.destroyTile()
-		}
+		ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, this.tiles.length * 3)
 	}
 	public handleBoomMatchFour(tile: Tile, tileGrid: (Tile | undefined)[][]): void {
 		if (tile.getHorizontal()) {
@@ -88,13 +86,16 @@ class MatchList {
 
 				tempTile?.destroyTile()
 			}
+			ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, CONST.gridWidth)
 		} else {
 			for (let i = 0; i < CONST.gridHeight; i++) {
 				const tempTile = tileGrid[i][tile.getCoordinateX()]
 				tileGrid[i][tile.getCoordinateX()] = undefined
 				tempTile?.destroyTile()
 			}
+			ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, CONST.gridHeight)
 		}
+
 		tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
 		tile.destroyTile()
 	}
@@ -127,6 +128,7 @@ class MatchList {
 				tempTile?.destroyTile()
 			}
 		}
+		ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, down - up + 1 + (right - left + 1))
 		tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
 		tile.destroyTile()
 		//console.log(tileGrid)
@@ -156,6 +158,8 @@ class MatchList {
 		}
 		tempTileList.forEach((tile) => {
 			centerTile.setHorizontal(centerTile.getCoordinateX() == tile.getCoordinateX())
+			centerTile.setMatchCount(centerTile.getMatchCount() + tile.getMatchCount())
+			tile.setSpeed(0.5)
 			tile.moveToTarget(centerTile.getCoordinateX(), centerTile.getCoordinateY(), () => {
 				this.countTile++
 				if (this.countTile == tempTileList.length) {
@@ -170,8 +174,12 @@ class MatchList {
 				}
 			})
 		})
+		// if (tempTileList.length >= 5) {
+		// 	centerTile.setTexture('colorboom')
+		// }
+		ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, tempTileList.length * 5)
 		centerTile.toggleGlow(true)
-		centerTile.setMatchCount(tempTileList.length + 1)
+
 		return 1
 		// if (remainTiles.length < 4) return 1
 

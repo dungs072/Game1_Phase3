@@ -21,12 +21,15 @@ class Tile extends Phaser.GameObjects.Sprite {
 		this.typeTile = typeTile
 		this.speed = 0.3
 		this.scale = 0.45
-		this.matchCount = 0
+		this.matchCount = 1
 		this.setOrigin(0.5, 0.5)
 		this.initAnimation()
 		this.initGlow()
 		this.setDepth(1)
 		this.scene.add.existing(this)
+	}
+	public setSpeed(value: number): void {
+		this.speed = value
 	}
 	public setHorizontal(state: boolean): void {
 		this.isHorizontal = state
@@ -76,7 +79,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 		})
 	}
 	private initGlow(): void {
-		this.preFX?.setPadding(50)
+		this.preFX?.setPadding(75)
 		this.glow = this.preFX?.addGlow()
 		this.toggleGlow(false)
 	}

@@ -4,6 +4,9 @@ import { CONST } from '../const/const'
 import Shuffle from './Shuffle'
 import GridTile from '../objects/GridTile'
 import MatchesManager from '../objects/MatchesManager'
+import MainGameUI from '../ui/MainGameUI'
+import ScoreManager from '../score/ScoreManager'
+import NotificationUI from '../ui/NotificationUI'
 
 class GameController {
 	private scene: Scene
@@ -11,6 +14,9 @@ class GameController {
 	private maxTimeToTriggerIdle: number
 	private maxTimeToTriggerHint: number
 	private shuffle: Shuffle
+	private gameUI: MainGameUI
+	private notificationUI: NotificationUI
+	private scoreManager: ScoreManager
 
 	private countTile: number
 
@@ -24,14 +30,51 @@ class GameController {
 	private secondSelectedTile: Tile | undefined
 	private selectedTile: Phaser.GameObjects.Image
 	private isDragging: boolean
+	private hasNextLevel: boolean
 
 	constructor(scene: Scene) {
 		this.scene = scene
 
+		this.initUI()
+		this.initScore()
 		this.initGrid()
 		this.initGame()
 		this.initInput()
 	}
+	private initUI(): void {
+		this.gameUI = new MainGameUI(this.scene)
+		this.notificationUI = new NotificationUI(this.scene)
+	}
+	private initScore(): void {
+		this.scoreManager = new ScoreManager()
+		this.addScore(0)
+		this.gameUI.setTargetText(this.scoreManager.getTargetScore().toString())
+		ScoreManager.Events.on(CONST.SCORE.ADD_SCORE_EVENT, (value: number) => {
+			this.addScore(value)
+		})
+		ScoreManager.Events.on(CONST.SCORE.FINISH_TARGET_EVENT, () => {
+			this.hasNextLevel = true
+			this.notificationUI.setInfoText(
+				'REACHED SCORE ' + this.scoreManager.getTargetScore().toString()
+			)
+			this.notificationUI.toggleUI(true, () => {
+				this.destroyAllTiles()
+				this.initGame()
+			})
+			this.scoreManager.changeTargetScore()
+			this.scoreManager.setCurrentScore(0)
+			this.gameUI.setTargetText(this.scoreManager.getTargetScore().toString())
+			this.notificationUI.setTitleText('LEVEL COMPLETED')
+		})
+	}
+	private addScore(value: number) {
+		this.scoreManager.addCurrentScore(value)
+		this.gameUI.setCurrentText(this.scoreManager.getCurrentScore().toString())
+		this.gameUI.setProgressBarValue(
+			this.scoreManager.getCurrentScore() / this.scoreManager.getTargetScore()
+		)
+	}
+
 	private initGrid(): void {
 		let flag = false
 		for (let y = 0; y < CONST.gridHeight; y++) {
@@ -118,6 +161,7 @@ class GameController {
 		// Init variables
 		this.resetAllIdleAndHint()
 		this.canMove = true
+		this.hasNextLevel = false
 		this.shuffle = new Shuffle(this.scene)
 		this.countTile = CONST.gridHeight * CONST.gridWidth
 		// set background color
@@ -171,11 +215,11 @@ class GameController {
 			this.triggerIdleTiles()
 			this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
 		}
-		// this.maxTimeToTriggerHint -= deltaTime
-		// if (this.maxTimeToTriggerHint <= 0) {
-		// 	this.triggerHint()
-		// 	this.maxTimeToTriggerHint = CONST.GAME.MAX_TIME_TRIGGER_HINT
-		// }
+		this.maxTimeToTriggerHint -= deltaTime
+		if (this.maxTimeToTriggerHint <= 0) {
+			this.triggerHint()
+			this.maxTimeToTriggerHint = CONST.GAME.MAX_TIME_TRIGGER_HINT
+		}
 	}
 	private triggerIdleTiles(): void {
 		let i = 0
@@ -211,7 +255,7 @@ class GameController {
 	private addTile(x: number, y: number): Tile {
 		// Get a random tile
 		const randomTileType: string =
-			CONST.candyTypes[Phaser.Math.RND.between(0, CONST.candyTypes.length - 8)]
+			CONST.candyTypes[Phaser.Math.RND.between(0, CONST.candyTypes.length - 12)]
 
 		// Return the created tile
 		return new Tile(
@@ -401,6 +445,10 @@ class GameController {
 				const tile = this.addTile(key, yCoordinate)
 
 				tile.moveToTarget(key, i, () => {
+					if (this.hasNextLevel) {
+						tile.destroyTile()
+						return
+					}
 					this.tileGrid[i][key] = tile
 					count--
 					if (count == 0) {
@@ -427,6 +475,7 @@ class GameController {
 			}
 		}
 		matchesManager.refactorMatch()
+
 		matchesManager.matchAndRemoveTiles(this.tileGrid, () => {
 			this.resetAndFillTile()
 		})
