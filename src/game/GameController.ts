@@ -255,7 +255,7 @@ class GameController {
 	private addTile(x: number, y: number): Tile {
 		// Get a random tile
 		const randomTileType: string =
-			CONST.candyTypes[Phaser.Math.RND.between(0, CONST.candyTypes.length - 9)]
+			CONST.candyTypes[Phaser.Math.RND.between(0, CONST.candyTypes.length - CONST.GAME.MIN_TILES)]
 
 		// Return the created tile
 		return new Tile(
@@ -290,18 +290,18 @@ class GameController {
 					this.canMove = true
 				})
 			} else {
-				// So if we are here, we must have selected a second tile
 				this.secondSelectedTile = gameobject
-				this.selectedTile.setVisible(false)
+
 				if (this.secondSelectedTile == this.firstSelectedTile) {
-					this.firstSelectedTile = this.secondSelectedTile = undefined
+					this.secondSelectedTile = undefined
 					return
 				}
+
 				if (this.secondSelectedTile == undefined) return
+				this.selectedTile.setVisible(false)
 				const dx = Math.abs(this.firstSelectedTile.x - this.secondSelectedTile.x) / CONST.tileWidth
 				const dy = Math.abs(this.firstSelectedTile.y - this.secondSelectedTile.y) / CONST.tileHeight
 
-				// Check if the selected tiles are both in range to make a move
 				if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
 					this.canMove = false
 					this.swapTiles()
@@ -365,7 +365,13 @@ class GameController {
 				repeat: 0,
 				yoyo: false,
 				onComplete: () => {
-					this.checkMatches()
+					if (this.firstSelectedTile?.isColorBoom()) {
+						this.explodeSameTileInGrid(this.secondSelectedTile!)
+					} else if (this.secondSelectedTile?.isColorBoom()) {
+						this.explodeSameTileInGrid(this.firstSelectedTile!)
+					} else {
+						this.checkMatches()
+					}
 				},
 			})
 
@@ -376,6 +382,43 @@ class GameController {
 					secondTilePosition.x / CONST.tileWidth
 				]
 		}
+	}
+	private explodeSameTileInGrid(tile: Tile) {
+		for (let y = 0; y < this.tileGrid.length; y++) {
+			for (let x = 0; x < this.tileGrid[y].length; x++) {
+				const tempTile = this.tileGrid[y][x]
+				if (tempTile?.hasSameTypeTile(tile.getTypeTile())) {
+					if (tempTile.getMatchCount() == 4) {
+						this.handleBoomMatchFour(tempTile, this.tileGrid)
+					} else {
+						tempTile.destroyTile()
+						this.tileGrid[y][x] = undefined
+					}
+				}
+			}
+		}
+		this.resetAndFillTile()
+	}
+	public handleBoomMatchFour(tile: Tile, tileGrid: (Tile | undefined)[][]): void {
+		if (tile.getHorizontal()) {
+			for (let i = 0; i < CONST.gridWidth; i++) {
+				const tempTile = tileGrid[tile.getCoordinateY()][i]
+				tileGrid[tile.getCoordinateY()][i] = undefined
+
+				tempTile?.destroyTile()
+			}
+			ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, CONST.gridWidth)
+		} else {
+			for (let i = 0; i < CONST.gridHeight; i++) {
+				const tempTile = tileGrid[i][tile.getCoordinateX()]
+				tileGrid[i][tile.getCoordinateX()] = undefined
+				tempTile?.destroyTile()
+			}
+			ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, CONST.gridHeight)
+		}
+
+		tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
+		tile.destroyTile()
 	}
 
 	private checkMatches(): void {
@@ -389,6 +432,7 @@ class GameController {
 			this.swapTiles()
 			this.tileUp()
 			this.canMove = true
+			this.isDragging = false
 		}
 	}
 
@@ -468,7 +512,7 @@ class GameController {
 		if (!this.tileGrid) return
 		const matchesManager = new MatchesManager(this.tileGrid)
 		for (let i = 0; i < matches.length; i++) {
-			let tempArr = matches[i]
+			const tempArr = matches[i]
 			for (let j = 0; j < tempArr.length; j++) {
 				const tile = tempArr[j]
 				matchesManager.addTile(tile)
@@ -479,39 +523,6 @@ class GameController {
 		matchesManager.matchAndRemoveTiles(this.tileGrid, () => {
 			this.resetAndFillTile()
 		})
-		// matchesManager.playTween()
-		// return
-
-		// for (let i = 0; i < matches.length; i++) {
-		// 	const tempArr = matches[i]
-
-		// 	for (let j = 0; j < tempArr.length; j++) {
-		// 		const tile = tempArr[j]
-		// 		const tilePos = this.getTilePos(this.tileGrid, tile)
-		// 		if (tilePos.x !== -1 && tilePos.y !== -1) {
-		// 			tile.destroyTile()
-		// 			this.tileGrid[tilePos.y][tilePos.x] = undefined
-		// 		}
-		// 	}
-		// }
-	}
-
-	private getTilePos(tileGrid: (Tile | undefined)[][], tile: Tile): any {
-		let pos = { x: -1, y: -1 }
-
-		//Find the position of a specific tile in the grid
-		for (let y = 0; y < tileGrid.length; y++) {
-			for (let x = 0; x < tileGrid[y].length; x++) {
-				//There is a match at this position so return the grid coords
-				if (tile === tileGrid[y][x]) {
-					pos.x = x
-					pos.y = y
-					break
-				}
-			}
-		}
-
-		return pos
 	}
 
 	private getMatches(tileGrid: (Tile | undefined)[][]): Tile[][] {

@@ -30,7 +30,7 @@ class MatchesManager {
 				for (let j = 0; j < tileList.length; j++) {
 					this.addTile(tileList[j])
 				}
-				//this.matchLists.splice(i)
+				this.matchLists.splice(i)
 			}
 		}
 	}

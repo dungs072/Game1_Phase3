@@ -209,5 +209,8 @@ class Tile extends Phaser.GameObjects.Sprite {
 		this.angle = 0
 		this.scale = 0.45
 	}
+	public isColorBoom(): boolean {
+		return this.getMatchCount() >= 5
+	}
 }
 export default Tile

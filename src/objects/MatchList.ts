@@ -36,6 +36,36 @@ class MatchList {
 	}
 	private canMatch(originalTile: Tile, otherTile: Tile): boolean {
 		if (originalTile.hasSameTypeTile(otherTile.getTypeTile())) {
+			if (originalTile.getCoordinateX() == this.centerTile.getCoordinateX()) {
+				if (
+					originalTile.getCoordinateX() - 1 == otherTile.getCoordinateX() &&
+					originalTile.getCoordinateY() == otherTile.getCoordinateY()
+				) {
+					this.centerTile = originalTile
+					return true
+				} else if (
+					originalTile.getCoordinateX() + 1 == otherTile.getCoordinateX() &&
+					originalTile.getCoordinateY() == otherTile.getCoordinateY()
+				) {
+					this.centerTile = originalTile
+					return true
+				}
+			} else if (originalTile.getCoordinateY() == this.centerTile.getCoordinateY()) {
+				if (
+					originalTile.getCoordinateY() + 1 == otherTile.getCoordinateY() &&
+					originalTile.getCoordinateX() == otherTile.getCoordinateX()
+				) {
+					this.centerTile = originalTile
+					return true
+				} else if (
+					originalTile.getCoordinateY() - 1 == otherTile.getCoordinateY() &&
+					originalTile.getCoordinateX() == otherTile.getCoordinateX()
+				) {
+					this.centerTile = originalTile
+					return true
+				}
+			}
+
 			if (
 				otherTile.getCoordinateX() == this.centerTile.getCoordinateX() ||
 				otherTile.getCoordinateY() == this.centerTile.getCoordinateY()
@@ -184,9 +214,9 @@ class MatchList {
 				}
 			})
 		})
-		// if (tempTileList.length >= 5) {
-		// 	centerTile.setTexture('colorboom')
-		// }
+		if (centerTile.isColorBoom()) {
+			centerTile.setTexture('colorboom')
+		}
 		ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, tempTileList.length * 5)
 		centerTile.toggleGlow(true)
 
