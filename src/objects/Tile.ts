@@ -19,7 +19,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 			params.frame
 		)
 		this.typeTile = typeTile
-		this.speed = 0.3
+		this.speed = 0.4
 		this.scale = 0.45
 		this.matchCount = 1
 		this.setOrigin(0.5, 0.5)
@@ -88,7 +88,8 @@ class Tile extends Phaser.GameObjects.Sprite {
 		yCoordinate: number,
 		callback: Function | undefined = undefined,
 		ease = 'Linear'
-	): Phaser.Tweens.Tween {
+	): Phaser.Tweens.Tween | undefined {
+		if (!this.scene) return undefined
 		let duration =
 			Math.abs(yCoordinate * CONST.tileHeight + CONST.GAME.START_GRID_Y - this.y) / this.speed
 		if (this.getCoordinateY() == yCoordinate) {
@@ -210,7 +211,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 		this.scale = 0.45
 	}
 	public isColorBoom(): boolean {
-		return this.getMatchCount() >= 5
+		return this.matchCount >= 5
 	}
 }
 export default Tile

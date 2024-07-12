@@ -1,4 +1,4 @@
-import { Scene } from 'phaser'
+import { Scene, Time } from 'phaser'
 import Tile from '../objects/Tile'
 import { CONST } from '../const/const'
 import Shuffle from './Shuffle'
@@ -25,6 +25,8 @@ class GameController {
 	// Grid with tiles
 	private tileGrid: (Tile | undefined)[][] = []
 
+	private matchesManager: MatchesManager
+
 	// Selected Tiles
 	private firstSelectedTile: Tile | undefined
 	private secondSelectedTile: Tile | undefined
@@ -34,7 +36,7 @@ class GameController {
 
 	constructor(scene: Scene) {
 		this.scene = scene
-
+		this.matchesManager = new MatchesManager(this.tileGrid)
 		this.initUI()
 		this.initScore()
 		this.initGrid()
@@ -92,12 +94,15 @@ class GameController {
 	}
 	private initInput(): void {
 		this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+			if (!this.canMove) return
 			const gameObject = this.getTile(pointer.worldX, pointer.worldY)
 			if (!gameObject) return
 			this.tileDown(pointer, gameObject)
 			this.isDragging = true
+			this.canMove = true
 		})
 		this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+			if (!this.canMove) return
 			if (!this.isDragging) {
 				const tile = this.getTile(pointer.worldX, pointer.worldY)
 				if (this.previousHoverTile && tile != this.previousHoverTile) {
@@ -181,6 +186,7 @@ class GameController {
 		}
 
 		this.shuffle.playShuffle(() => {
+			this.canMove = false
 			for (let y = 0; y < CONST.gridHeight; y++) {
 				for (let x = 0; x < CONST.gridWidth; x++) {
 					this.tileGrid[y][x]?.moveToTarget(
@@ -324,6 +330,7 @@ class GameController {
 	 */
 	private swapTiles(): void {
 		if (this.firstSelectedTile && this.secondSelectedTile) {
+			this.canMove = false
 			this.scene.tweens.killTweensOf(this.firstSelectedTile)
 			this.scene.tweens.killTweensOf(this.secondSelectedTile)
 			this.firstSelectedTile.resetTile()
@@ -354,6 +361,9 @@ class GameController {
 				duration: 400,
 				repeat: 0,
 				yoyo: false,
+				onUpdate: () => {
+					this.canMove = false
+				},
 			})
 
 			this.scene.add.tween({
@@ -364,11 +374,14 @@ class GameController {
 				duration: 400,
 				repeat: 0,
 				yoyo: false,
+				onUpdate: () => {
+					this.canMove = false
+				},
 				onComplete: () => {
 					if (this.firstSelectedTile?.isColorBoom()) {
-						this.explodeSameTileInGrid(this.secondSelectedTile!)
+						this.explodeSameTileInGrid(this.secondSelectedTile!, this.firstSelectedTile)
 					} else if (this.secondSelectedTile?.isColorBoom()) {
-						this.explodeSameTileInGrid(this.firstSelectedTile!)
+						this.explodeSameTileInGrid(this.firstSelectedTile!, this.secondSelectedTile)
 					} else {
 						this.checkMatches()
 					}
@@ -383,7 +396,7 @@ class GameController {
 				]
 		}
 	}
-	private explodeSameTileInGrid(tile: Tile) {
+	private explodeSameTileInGrid(tile: Tile, boomTile: Tile) {
 		for (let y = 0; y < this.tileGrid.length; y++) {
 			for (let x = 0; x < this.tileGrid[y].length; x++) {
 				const tempTile = this.tileGrid[y][x]
@@ -397,6 +410,8 @@ class GameController {
 				}
 			}
 		}
+		boomTile.destroyTile()
+		this.tileGrid[boomTile.getCoordinateY()][boomTile.getCoordinateX()] = undefined
 		this.resetAndFillTile()
 	}
 	public handleBoomMatchFour(tile: Tile, tileGrid: (Tile | undefined)[][]): void {
@@ -422,12 +437,13 @@ class GameController {
 	}
 
 	private checkMatches(): void {
+		this.canMove = true
 		const matches = this.getMatches(this.tileGrid)
 		if (matches.length > 0) {
 			this.stopIdleAndHint()
 			this.removeTileGroup(matches)
-			//this.resetAndFillTile()
 			this.tileUp()
+			this.canMove = false
 		} else {
 			this.swapTiles()
 			this.tileUp()
@@ -473,34 +489,39 @@ class GameController {
 				}
 			}
 		}
-		coordinates.forEach((values: number[], key: number) => {
-			let j = values[1]
-			for (let i = values[0]; i >= 0; i--) {
-				if (this.tileGrid[i][key] == undefined) continue
-				this.tileGrid[i][key]?.moveToTarget(key, j)
-				let tempTile = this.tileGrid[i][key]
-				this.tileGrid[i][key] = this.tileGrid[j][key]
-				this.tileGrid[j][key] = tempTile
+		if (coordinates.size == 0) {
+			// console.log('hehe')
+			this.canMove = true
+		} else {
+			coordinates.forEach((values: number[], key: number) => {
+				let j = values[1]
+				for (let i = values[0]; i >= 0; i--) {
+					if (this.tileGrid[i][key] == undefined) continue
+					this.tileGrid[i][key]?.moveToTarget(key, j)
+					let tempTile = this.tileGrid[i][key]
+					this.tileGrid[i][key] = this.tileGrid[j][key]
+					this.tileGrid[j][key] = tempTile
 
-				j--
-			}
-			for (let i = j; i >= 0; i--) {
-				const yCoordinate = i - j - 1
-				const tile = this.addTile(key, yCoordinate)
+					j--
+				}
+				for (let i = j; i >= 0; i--) {
+					const yCoordinate = i - j - 1
+					const tile = this.addTile(key, yCoordinate)
 
-				tile.moveToTarget(key, i, () => {
-					if (this.hasNextLevel) {
-						tile.destroyTile()
-						return
-					}
-					this.tileGrid[i][key] = tile
-					count--
-					if (count == 0) {
-						this.checkMatches()
-					}
-				})
-			}
-		})
+					tile.moveToTarget(key, i, () => {
+						if (this.hasNextLevel) {
+							tile.destroyTile()
+							return
+						}
+						this.tileGrid[i][key] = tile
+						count--
+						if (count == 0) {
+							this.checkMatches()
+						}
+					})
+				}
+			})
+		}
 	}
 
 	private tileUp(): void {
@@ -510,20 +531,58 @@ class GameController {
 
 	private removeTileGroup(matches: Tile[][]): void {
 		if (!this.tileGrid) return
-		const matchesManager = new MatchesManager(this.tileGrid)
+		this.matchesManager.clear()
 		for (let i = 0; i < matches.length; i++) {
 			const tempArr = matches[i]
 			for (let j = 0; j < tempArr.length; j++) {
 				const tile = tempArr[j]
-				matchesManager.addTile(tile)
+				if (tile.isColorBoom()) {
+					this.destroyTile(tile)
+					continue
+				}
+				this.matchesManager.addTile(tile)
 			}
 		}
-		matchesManager.refactorMatch()
-
-		matchesManager.matchAndRemoveTiles(this.tileGrid, () => {
-			this.resetAndFillTile()
-		})
+		// const now = new Date()
+		// const currentTime = now.toLocaleTimeString()
+		//console.log(currentTime)
+		this.matchesManager.refactorMatch()
+		this.matchesManager.matchAndRemoveTiles(
+			this.tileGrid,
+			this.secondSelectedTile?.getCoordinateX()!,
+			this.secondSelectedTile?.getCoordinateY()!,
+			() => {
+				// console.log('remove and clear')
+				this.resetAndFillTile()
+			},
+			() => {
+				this.checkMatches()
+			}
+		)
 	}
+	private destroyTile(tile: Tile): void {
+		this.tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
+		tile.destroyTile()
+	}
+	// private refineMatches(matches: Tile[][]): void {
+	// 	for (let i = matches.length - 1; i >= 0; i--) {
+	// 		const tempArr = matches[i]
+	// 		for (let j = tempArr.length - 1; j >= 0; j--) {
+	// 			if(this.containTiles(matches, tempArr[j]))
+	// 		}
+	// 	}
+	// }
+	// private containTiles(matches: Tile[][], tile: Tile): boolean {
+	// 	for (let i = 0; i < matches.length; i++) {
+	// 		const tempArr = matches[i]
+	// 		for (let j = 0; j < tempArr.length; j++) {
+	// 			if (tempArr[j] == tile&&tempArr[j].getCoordinateX()!=tile.getCoordinateX()) {
+	// 				return true
+	// 			}
+	// 		}
+	// 	}
+	// 	return false
+	// }
 
 	private getMatches(tileGrid: (Tile | undefined)[][]): Tile[][] {
 		let matches: Tile[][] = []

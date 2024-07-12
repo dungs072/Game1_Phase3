@@ -18,6 +18,7 @@ export let CONST = {
 		'poptart2',
 		'starcookie1',
 		'starcookie2',
+		'colorboom',
 	],
 
 	MAX_WIDTH: 640,
@@ -28,7 +29,7 @@ export let CONST = {
 		MAX_TIME_TRIGGER_HINT: 5,
 		START_GRID_X: 85,
 		START_GRID_Y: 200,
-		MIN_TILES: 12,
+		MIN_TILES: 11,
 	},
 
 	TILE: {

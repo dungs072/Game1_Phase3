@@ -8,7 +8,7 @@ class ScoreManager {
 	constructor() {
 		this.currentScore = 0
 		this.currentTargetIndex = 0
-		this.targetScore = [100, 1000, 3000, 5000, 7000, 9000]
+		this.targetScore = [9999, 1000, 3000, 5000, 7000, 9000]
 	}
 	public getTargetScore(): number {
 		return this.targetScore[this.currentTargetIndex]

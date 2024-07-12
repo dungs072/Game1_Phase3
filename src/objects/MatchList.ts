@@ -5,11 +5,16 @@ import Tile from './Tile'
 class MatchList {
 	private tiles: Tile[]
 	private countTile: number
-	private centerTile: Tile
+	public centerTile: Tile
 	private tileGrid: (Tile | undefined)[][]
 	constructor(tileGrid: (Tile | undefined)[][]) {
 		this.tiles = []
 		this.tileGrid = tileGrid
+	}
+	public debugMatch(): void {
+		for (let i = 0; i < this.tiles.length; i++) {
+			console.log(this.tiles[i].getCoordinateY(), this.tiles[i].getCoordinateX())
+		}
 	}
 	public getTiles(): Tile[] {
 		return this.tiles
@@ -36,7 +41,10 @@ class MatchList {
 	}
 	private canMatch(originalTile: Tile, otherTile: Tile): boolean {
 		if (originalTile.hasSameTypeTile(otherTile.getTypeTile())) {
-			if (originalTile.getCoordinateX() == this.centerTile.getCoordinateX()) {
+			if (
+				originalTile.getCoordinateX() == this.centerTile.getCoordinateX() &&
+				otherTile.getCoordinateX() == this.centerTile.getCoordinateX()
+			) {
 				if (
 					originalTile.getCoordinateX() - 1 == otherTile.getCoordinateX() &&
 					originalTile.getCoordinateY() == otherTile.getCoordinateY()
@@ -50,7 +58,10 @@ class MatchList {
 					this.centerTile = originalTile
 					return true
 				}
-			} else if (originalTile.getCoordinateY() == this.centerTile.getCoordinateY()) {
+			} else if (
+				originalTile.getCoordinateY() == this.centerTile.getCoordinateY() &&
+				otherTile.getCoordinateY() == this.centerTile.getCoordinateY()
+			) {
 				if (
 					originalTile.getCoordinateY() + 1 == otherTile.getCoordinateY() &&
 					originalTile.getCoordinateX() == otherTile.getCoordinateX()
@@ -139,8 +150,11 @@ class MatchList {
 		tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
 		tile.destroyTile()
 	}
-	private handleBoomMatchFive(tileGrid: (Tile | undefined)[][]): void {
-		const tile = this.findCenter(tileGrid, this.tiles)
+	private handleBoomMatchFive(
+		tileGrid: (Tile | undefined)[][],
+		centerTile: Tile | undefined = undefined
+	): void {
+		const tile = centerTile == undefined ? this.findCenter(tileGrid, this.tiles) : centerTile
 		const left =
 			tile.getCoordinateX() - CONST.MATCH.SIZE_BOOM >= 0
 				? tile.getCoordinateX() - CONST.MATCH.SIZE_BOOM
@@ -171,18 +185,54 @@ class MatchList {
 		ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, down - up + 1 + (right - left + 1))
 		tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
 		tile.destroyTile()
-		//console.log(tileGrid)
 	}
 
 	public mergeTiles(
 		tileGrid: (Tile | undefined)[][],
+		xCoordinate: number,
+		yCoordinate: number,
 		finishCallback: Function | undefined = undefined
 	): number {
-		const centerTile = this.findCenter(tileGrid, this.tiles)
+		let centerTile = this.findCenter(tileGrid, this.tiles)
 		let coordinates = []
 		let tempTileList: Tile[] = []
 		let remainTiles = []
 		this.countTile = 0
+		let preTile = undefined
+		let flag = true
+
+		for (let i = 0; i < this.tiles.length; i++) {
+			if (this.tiles[i].getMatchCount() == 4) {
+				this.destroyAllTilesExcept(this.tiles[i], tileGrid)
+				this.handleBoomMatchFour(this.tiles[i], tileGrid)
+
+				return 0
+			} else if (this.tiles[i].getMatchCount() >= 5) {
+				this.destroyAllTilesExcept(this.tiles[i], tileGrid)
+				this.handleBoomMatchFive(tileGrid, this.tiles[i])
+
+				return 0
+			}
+		}
+
+		for (let i = 0; i < this.tiles.length; i++) {
+			const tile = this.tiles[i]
+			if (preTile) {
+				if (preTile.getCoordinateY() >= tile.getCoordinateY()) {
+					flag = false
+				}
+			}
+
+			if (tile.getCoordinateX() == xCoordinate && tile.getCoordinateY() == yCoordinate) {
+				centerTile = tile
+				flag = false
+				break
+			}
+			preTile = tile
+		}
+		if (flag) {
+			centerTile = this.tiles[this.tiles.length - 1]
+		}
 		for (let i = 0; i < this.tiles.length; i++) {
 			const tile = this.tiles[i]
 			if (tile == centerTile) continue
@@ -196,12 +246,14 @@ class MatchList {
 				remainTiles.push(tile)
 			}
 		}
+
 		tempTileList.forEach((tile) => {
 			centerTile.setHorizontal(centerTile.getCoordinateX() == tile.getCoordinateX())
 			centerTile.setMatchCount(centerTile.getMatchCount() + tile.getMatchCount())
-			tile.setSpeed(0.5)
+			tile.setSpeed(0.7)
 			tile.moveToTarget(centerTile.getCoordinateX(), centerTile.getCoordinateY(), () => {
 				this.countTile++
+				tile.setVisible(false)
 				if (this.countTile == tempTileList.length) {
 					coordinates.forEach((coordinate) => {
 						const tempTile = tileGrid[coordinate.y][coordinate.x]
@@ -265,53 +317,77 @@ class MatchList {
 	private findCenter(tileGrid: (Tile | undefined)[][], targetTile: Tile[]): Tile {
 		let count = -1
 		let maxCount = -1
+		let flag = true
 		let centerTile = targetTile[0]
 		for (let i = 0; i < targetTile.length - 1; i++) {
-			const tile = targetTile[i]
-			const right = tile.getCoordinateX() + 1
-			const left = tile.getCoordinateX() - 1
-			const up = tile.getCoordinateY() - 1
-			const down = tile.getCoordinateY() + 1
-			let isHorizontal = false
-			let isVertical = false
-			if (right < CONST.gridWidth) {
-				const nextTile = tileGrid[tile.getCoordinateY()][right]
-				if (targetTile.includes(nextTile!)) {
-					count++
-					isHorizontal = true
+			for (let j = 1; j < targetTile.length - 1; j++) {
+				if (
+					targetTile[i].getCoordinateX() != targetTile[j].getCoordinateX() &&
+					targetTile[i].getCoordinateY() != targetTile[j].getCoordinateY()
+				) {
+					flag = false
+					break
 				}
 			}
-			if (left >= 0) {
-				const nextTile = tileGrid[tile.getCoordinateY()][left]
-				if (targetTile.includes(nextTile!)) {
-					count++
-					isHorizontal = true
-				}
+			if (flag) {
+				centerTile = targetTile[i]
+				break
 			}
-			if (down < CONST.gridHeight) {
-				const nextTile = tileGrid[down][tile.getCoordinateX()]
-				if (targetTile.includes(nextTile!)) {
-					count++
-					isVertical = true
-				}
-			}
-			if (up >= 0) {
-				const nextTile = tileGrid[up][tile.getCoordinateX()]
-				if (targetTile.includes(nextTile!)) {
-					count++
-					isVertical = true
-				}
-			}
-			if (isVertical && isHorizontal) {
-				count++
-			}
-			if (count > maxCount) {
-				maxCount = count
-				centerTile = tile
-			}
-			count = -1
 		}
+		// for (let i = 0; i < targetTile.length - 1; i++) {
+		// 	const tile = targetTile[i]
+		// 	const right = tile.getCoordinateX() + 1
+		// 	const left = tile.getCoordinateX() - 1
+		// 	const up = tile.getCoordinateY() - 1
+		// 	const down = tile.getCoordinateY() + 1
+		// 	let isHorizontal = false
+		// 	let isVertical = false
+		// 	if (right < CONST.gridWidth) {
+		// 		const nextTile = tileGrid[tile.getCoordinateY()][right]
+		// 		if (targetTile.includes(nextTile!)) {
+		// 			count++
+		// 			isHorizontal = true
+		// 		}
+		// 	}
+		// 	if (left >= 0) {
+		// 		const nextTile = tileGrid[tile.getCoordinateY()][left]
+		// 		if (targetTile.includes(nextTile!)) {
+		// 			count++
+		// 			isHorizontal = true
+		// 		}
+		// 	}
+		// 	if (down < CONST.gridHeight) {
+		// 		const nextTile = tileGrid[down][tile.getCoordinateX()]
+		// 		if (targetTile.includes(nextTile!)) {
+		// 			count++
+		// 			isVertical = true
+		// 		}
+		// 	}
+		// 	if (up >= 0) {
+		// 		const nextTile = tileGrid[up][tile.getCoordinateX()]
+		// 		if (targetTile.includes(nextTile!)) {
+		// 			count++
+		// 			isVertical = true
+		// 		}
+		// 	}
+		// 	if (isVertical && isHorizontal) {
+		// 		count++
+		// 	}
+		// 	if (count > maxCount) {
+		// 		maxCount = count
+		// 		centerTile = tile
+		// 	}
+		// 	count = -1
+		// }
 		return centerTile
+	}
+	private destroyAllTilesExcept(tile: Tile, tileGrid: (Tile | undefined)[][]): void {
+		this.tiles.forEach((tempTile) => {
+			if (tempTile != tile) {
+				tileGrid[tempTile.getCoordinateY()][tempTile.getCoordinateX()] = undefined
+				tempTile.destroyTile()
+			}
+		})
 	}
 }
 export default MatchList

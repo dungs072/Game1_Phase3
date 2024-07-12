@@ -1,5 +1,6 @@
 import { Scene } from 'phaser'
 import { CONST } from '../const/const'
+import CustomParticle from '../particles/CustomParticle'
 
 class MainGameUI extends Phaser.GameObjects.Container {
 	private fProgressBar: Phaser.GameObjects.Image
@@ -92,14 +93,30 @@ class MainGameUI extends Phaser.GameObjects.Container {
 				x: { min: 0, max: 0 },
 				y: { min: 10, max: 35 },
 				quantity: 3,
-				lifespan: 500,
+				lifespan: 200,
 				gravityX: -200,
-				scale: { min: 1, max: 2 },
+				scale: { min: 2, max: 3 },
 				blendMode: 'ADD',
 				tint: { start: 0x6be1fe, end: 0x6be1fe },
 			}
 		)
 		this.add(this.dropParticle)
+
+		const emitterConfig = {
+			// Your emitter configuration here
+			speed: 100,
+			lifespan: 2000,
+			blendMode: 'ADD',
+		}
+
+		const fireworkParticle = new CustomParticle(
+			this.scene,
+			CONST.MAX_WIDTH / 2,
+			CONST.MAX_HEIGHT / 2
+		)
+		fireworkParticle.explode(100)
+		fireworkParticle.setDepth(30)
+		this.scene.add.existing(fireworkParticle)
 	}
 	public toggleDropParticle(state: boolean): void {
 		this.dropParticle.setVisible(state)
