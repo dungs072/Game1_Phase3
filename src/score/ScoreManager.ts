@@ -1,4 +1,4 @@
-import { CONST } from '../const/const'
+import CONST from '../const/const'
 
 class ScoreManager {
 	public static Events: Phaser.Events.EventEmitter = new Phaser.Events.EventEmitter()

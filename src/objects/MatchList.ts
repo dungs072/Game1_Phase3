@@ -1,4 +1,4 @@
-import { CONST } from '../const/const'
+import CONST from '../const/const'
 import ScoreManager from '../score/ScoreManager'
 import Tile from './Tile'
 
@@ -19,96 +19,8 @@ class MatchList {
 	public getTiles(): Tile[] {
 		return this.tiles
 	}
-	public addTile(tile: Tile): boolean {
-		if (this.tiles.length == 0) {
-			this.tiles.push(tile)
-			this.centerTile = tile
-			return true
-		} else {
-			if (this.tiles.includes(tile)) {
-				return true
-			}
-			for (let i = 0; i < this.tiles.length; i++) {
-				if (this.canMatch(this.tiles[i], tile)) {
-					this.tiles.push(tile)
-					this.centerTile = this.findCenter(this.tileGrid, this.tiles)
-					return true
-				}
-			}
-		}
-
-		return false
-	}
-	private canMatch(originalTile: Tile, otherTile: Tile): boolean {
-		if (originalTile.hasSameTypeTile(otherTile.getTypeTile())) {
-			if (
-				originalTile.getCoordinateX() == this.centerTile.getCoordinateX() &&
-				otherTile.getCoordinateX() == this.centerTile.getCoordinateX()
-			) {
-				if (
-					originalTile.getCoordinateX() - 1 == otherTile.getCoordinateX() &&
-					originalTile.getCoordinateY() == otherTile.getCoordinateY()
-				) {
-					this.centerTile = originalTile
-					return true
-				} else if (
-					originalTile.getCoordinateX() + 1 == otherTile.getCoordinateX() &&
-					originalTile.getCoordinateY() == otherTile.getCoordinateY()
-				) {
-					this.centerTile = originalTile
-					return true
-				}
-			} else if (
-				originalTile.getCoordinateY() == this.centerTile.getCoordinateY() &&
-				otherTile.getCoordinateY() == this.centerTile.getCoordinateY()
-			) {
-				if (
-					originalTile.getCoordinateY() + 1 == otherTile.getCoordinateY() &&
-					originalTile.getCoordinateX() == otherTile.getCoordinateX()
-				) {
-					this.centerTile = originalTile
-					return true
-				} else if (
-					originalTile.getCoordinateY() - 1 == otherTile.getCoordinateY() &&
-					originalTile.getCoordinateX() == otherTile.getCoordinateX()
-				) {
-					this.centerTile = originalTile
-					return true
-				}
-			}
-
-			if (
-				otherTile.getCoordinateX() == this.centerTile.getCoordinateX() ||
-				otherTile.getCoordinateY() == this.centerTile.getCoordinateY()
-			) {
-				// check right
-				if (
-					originalTile.getCoordinateX() + 1 == otherTile.getCoordinateX() &&
-					originalTile.getCoordinateY() == otherTile.getCoordinateY()
-				) {
-					return true
-				}
-				if (
-					originalTile.getCoordinateX() == otherTile.getCoordinateX() &&
-					originalTile.getCoordinateY() + 1 == otherTile.getCoordinateY()
-				) {
-					return true
-				}
-				if (
-					originalTile.getCoordinateX() - 1 == otherTile.getCoordinateX() &&
-					originalTile.getCoordinateY() == otherTile.getCoordinateY()
-				) {
-					return true
-				}
-				if (
-					originalTile.getCoordinateX() == otherTile.getCoordinateX() &&
-					originalTile.getCoordinateY() - 1 == otherTile.getCoordinateY()
-				) {
-					return true
-				}
-			}
-		}
-		return false
+	public addTile(tile: Tile): void {
+		this.tiles.push(tile)
 	}
 	public playTween(): void {
 		this.tiles.forEach((tile) => {
@@ -193,6 +105,9 @@ class MatchList {
 		yCoordinate: number,
 		finishCallback: Function | undefined = undefined
 	): number {
+		if (this.tiles.length <= 3) {
+			return 0
+		}
 		let centerTile = this.findCenter(tileGrid, this.tiles)
 		let coordinates = []
 		let tempTileList: Tile[] = []
@@ -269,54 +184,13 @@ class MatchList {
 		if (centerTile.isColorBoom()) {
 			centerTile.setTexture('colorboom')
 		}
+		centerTile.setIsVisited(false)
 		ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, tempTileList.length * 5)
 		centerTile.toggleGlow(true)
 
 		return 1
-		// if (remainTiles.length < 4) return 1
-
-		// coordinates.length = 0
-		// tempTileList.length = 0
-		// this.countTile = 0
-		// const anotherCenterTile = this.findCenter(tileGrid, remainTiles)
-		// for (let i = 0; i < remainTiles.length; i++) {
-		// 	const tile = remainTiles[i]
-		// 	if (tile == anotherCenterTile) continue
-		// 	if (
-		// 		tile.getCoordinateX() == anotherCenterTile.getCoordinateX() ||
-		// 		tile.getCoordinateY() == anotherCenterTile.getCoordinateY()
-		// 	) {
-		// 		coordinates.push({ x: tile.getCoordinateX(), y: tile.getCoordinateY() })
-		// 		tempTileList.push(tile)
-		// 	}
-		// }
-		// tempTileList.forEach((tile) => {
-		// 	tile.moveToTarget(
-		// 		anotherCenterTile.getCoordinateX(),
-		// 		anotherCenterTile.getCoordinateY(),
-		// 		() => {
-		// 			this.countTile++
-		// 			//console.log(tempTileList.length, this.countTile)
-		// 			if (tempTileList.length == this.countTile) {
-		// 				coordinates.forEach((coordinate) => {
-		// 					const tempTile = tileGrid[coordinate.y][coordinate.x]
-		// 					tileGrid[coordinate.y][coordinate.x] = undefined
-		// 					tempTile?.destroyTile()
-		// 				})
-		// 				if (finishCallback) {
-		// 					console.log('done')
-		// 					finishCallback()
-		// 				}
-		// 			}
-		// 		}
-		// 	)
-		// })
-		// anotherCenterTile.toggleGlow(true)
-		// return 2
 	}
 	private findCenter(tileGrid: (Tile | undefined)[][], targetTile: Tile[]): Tile {
-		let count = -1
-		let maxCount = -1
 		let flag = true
 		let centerTile = targetTile[0]
 		for (let i = 0; i < targetTile.length - 1; i++) {
@@ -334,51 +208,49 @@ class MatchList {
 				break
 			}
 		}
-		// for (let i = 0; i < targetTile.length - 1; i++) {
-		// 	const tile = targetTile[i]
-		// 	const right = tile.getCoordinateX() + 1
-		// 	const left = tile.getCoordinateX() - 1
-		// 	const up = tile.getCoordinateY() - 1
-		// 	const down = tile.getCoordinateY() + 1
-		// 	let isHorizontal = false
-		// 	let isVertical = false
-		// 	if (right < CONST.gridWidth) {
-		// 		const nextTile = tileGrid[tile.getCoordinateY()][right]
-		// 		if (targetTile.includes(nextTile!)) {
-		// 			count++
-		// 			isHorizontal = true
-		// 		}
-		// 	}
-		// 	if (left >= 0) {
-		// 		const nextTile = tileGrid[tile.getCoordinateY()][left]
-		// 		if (targetTile.includes(nextTile!)) {
-		// 			count++
-		// 			isHorizontal = true
-		// 		}
-		// 	}
-		// 	if (down < CONST.gridHeight) {
-		// 		const nextTile = tileGrid[down][tile.getCoordinateX()]
-		// 		if (targetTile.includes(nextTile!)) {
-		// 			count++
-		// 			isVertical = true
-		// 		}
-		// 	}
-		// 	if (up >= 0) {
-		// 		const nextTile = tileGrid[up][tile.getCoordinateX()]
-		// 		if (targetTile.includes(nextTile!)) {
-		// 			count++
-		// 			isVertical = true
-		// 		}
-		// 	}
-		// 	if (isVertical && isHorizontal) {
-		// 		count++
-		// 	}
-		// 	if (count > maxCount) {
-		// 		maxCount = count
-		// 		centerTile = tile
-		// 	}
-		// 	count = -1
-		// }
+		return centerTile
+	}
+	private findCenter2(tileGrid: (Tile | undefined)[][], targetTile: Tile[]): Tile {
+		let count = 0
+		let maxCount = 0
+		let centerTile = targetTile[0]
+		for (let i = 0; i < targetTile.length; i++) {
+			const tile = targetTile[i]
+			const right = tile.getCoordinateX() + 1
+			const left = tile.getCoordinateX() - 1
+			const up = tile.getCoordinateY() - 1
+			const down = tile.getCoordinateY() + 1
+			if (right < CONST.gridWidth) {
+				const nextTile = tileGrid[tile.getCoordinateY()][right]
+				if (targetTile.includes(nextTile!)) {
+					count++
+				}
+			}
+			if (left >= 0) {
+				const nextTile = tileGrid[tile.getCoordinateY()][left]
+				if (targetTile.includes(nextTile!)) {
+					count++
+				}
+			}
+			if (down < CONST.gridHeight) {
+				const nextTile = tileGrid[down][tile.getCoordinateX()]
+				if (targetTile.includes(nextTile!)) {
+					count++
+				}
+			}
+			if (up >= 0) {
+				const nextTile = tileGrid[up][tile.getCoordinateX()]
+				if (targetTile.includes(nextTile!)) {
+					count++
+				}
+			}
+
+			if (count > maxCount) {
+				maxCount = count
+				centerTile = tile
+			}
+			count = 0
+		}
 		return centerTile
 	}
 	private destroyAllTilesExcept(tile: Tile, tileGrid: (Tile | undefined)[][]): void {

@@ -1,5 +1,5 @@
 import { Scene } from 'phaser'
-import { CONST } from '../const/const'
+import CONST from '../const/const'
 
 class NotificationUI extends Phaser.GameObjects.Container {
 	private mainPanel: Phaser.GameObjects.Image

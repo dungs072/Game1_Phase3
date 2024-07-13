@@ -1,4 +1,4 @@
-import { CONST } from '../const/const'
+import CONST from '../const/const'
 import { ImageConstructor } from '../interfaces/image.interface'
 import Utils from '../utils/Utils'
 
@@ -6,11 +6,11 @@ class Tile extends Phaser.GameObjects.Sprite {
 	private speed: number
 	private destroyEffect: Phaser.GameObjects.Particles.ParticleEmitter
 	private glow: Phaser.FX.Glow | undefined
-	private typeTile: string
 	private matchCount: number
 	private isHorizontal: boolean
+	private isVisited: boolean
 
-	constructor(params: ImageConstructor, typeTile: string) {
+	constructor(params: ImageConstructor) {
 		super(
 			params.scene,
 			params.x + CONST.GAME.START_GRID_X,
@@ -18,15 +18,21 @@ class Tile extends Phaser.GameObjects.Sprite {
 			params.texture,
 			params.frame
 		)
-		this.typeTile = typeTile
 		this.speed = 0.4
 		this.scale = 0.45
 		this.matchCount = 1
+		this.isVisited = false
 		this.setOrigin(0.5, 0.5)
 		this.initAnimation()
 		this.initGlow()
 		this.setDepth(1)
 		this.scene.add.existing(this)
+	}
+	public setIsVisited(isVisited: boolean): void {
+		this.isVisited = isVisited
+	}
+	public getIsVisited(): boolean {
+		return this.isVisited
 	}
 	public setSpeed(value: number): void {
 		this.speed = value
@@ -53,16 +59,16 @@ class Tile extends Phaser.GameObjects.Sprite {
 		return this.matchCount
 	}
 	public hasSameTypeTile(otherTypeTile: string): boolean {
-		return this.typeTile == otherTypeTile
+		return this.texture.key == otherTypeTile
 	}
 	public getTypeTile(): string {
-		return this.typeTile
+		return this.texture.key
 	}
 	public getCoordinateX(): number {
-		return (this.x - CONST.GAME.START_GRID_X) / CONST.tileWidth
+		return Math.floor((this.x - CONST.GAME.START_GRID_X) / CONST.tileWidth)
 	}
 	public getCoordinateY(): number {
-		return (this.y - CONST.GAME.START_GRID_Y) / CONST.tileHeight
+		return Math.floor((this.y - CONST.GAME.START_GRID_Y) / CONST.tileHeight)
 	}
 
 	private initAnimation(): void {
@@ -212,6 +218,16 @@ class Tile extends Phaser.GameObjects.Sprite {
 	}
 	public isColorBoom(): boolean {
 		return this.matchCount >= 5
+	}
+	public debugTile(): void {
+		console.log(
+			this.getCoordinateY(),
+			this.getCoordinateX(),
+			'isVisited',
+			this.isVisited,
+			'texture',
+			this.getTypeTile()
+		)
 	}
 }
 export default Tile

@@ -1,5 +1,5 @@
 import { Scene } from 'phaser'
-import { CONST } from '../const/const'
+import CONST from '../const/const'
 import Tile from '../objects/Tile'
 
 class Shuffle {

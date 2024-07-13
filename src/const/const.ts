@@ -1,4 +1,4 @@
-export let CONST = {
+let CONST = {
 	score: 0,
 	highscore: 0,
 	gridWidth: 8,
@@ -29,7 +29,7 @@ export let CONST = {
 		MAX_TIME_TRIGGER_HINT: 5,
 		START_GRID_X: 85,
 		START_GRID_Y: 200,
-		MIN_TILES: 11,
+		MIN_TILES: 7,
 	},
 
 	TILE: {
@@ -48,3 +48,4 @@ export let CONST = {
 		FINISH_TARGET_EVENT: 'finishevent',
 	},
 }
+export default CONST

@@ -1,4 +1,4 @@
-import { CONST } from '../const/const'
+import CONST from '../const/const'
 import { ImageConstructor } from '../interfaces/image.interface'
 
 class GridTile extends Phaser.GameObjects.Image {

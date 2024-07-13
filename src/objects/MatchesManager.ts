@@ -1,31 +1,373 @@
+import CONST from '../const/const'
 import MatchList from './MatchList'
 import Tile from './Tile'
 
 class MatchesManager {
 	private matchLists: MatchList[]
 	private tileGrid: (Tile | undefined)[][]
+	private countTileLeft: number
 	constructor(tileGrid: (Tile | undefined)[][]) {
 		this.tileGrid = tileGrid
-		this.matchLists = [new MatchList(this.tileGrid)]
+		this.matchLists = []
 	}
-	public addTile(tile: Tile) {
-		for (let i = 0; i < this.matchLists.length; i++) {
-			if (this.matchLists[i].addTile(tile)) {
-				// console.log(
-				// 	'center',
-				// 	this.matchLists[i].centerTile.getCoordinateY(),
-				// 	this.matchLists[i].centerTile.getCoordinateX(),
-				// 	'match: ',
-				// 	i
-				// )
-				// console.log(this.matchLists[i].debugMatch())
-				// console.log('dones')
-				return
+
+	public isMatch(row: number, col: number, potentialTile: Tile): boolean {
+		return (
+			row >= 0 &&
+			row < CONST.gridHeight &&
+			col >= 0 &&
+			col < CONST.gridWidth &&
+			!this.tileGrid[row][col]?.getIsVisited() &&
+			this.tileGrid[row][col]?.getTypeTile() == potentialTile.getTypeTile()
+		)
+	}
+
+	private checkCrossShape(tile: Tile): { x: number; y: number }[] | null {
+		const positions: { x: number; y: number }[] = []
+		const row = tile.getCoordinateY()
+		const col = tile.getCoordinateX()
+		if (this.isMatch(row, col, tile)) {
+			positions.push({ y: row, x: col })
+			tile.setIsVisited(true)
+			// Check upwards
+			let i = 1
+			while (this.isMatch(row - i, col, tile)) {
+				positions.push({ y: row - i, x: col })
+				this.tileGrid[row - i][col]?.setIsVisited(true)
+				i++
+			}
+
+			// Check downwards
+			i = 1
+			while (this.isMatch(row + i, col, tile)) {
+				positions.push({ y: row + i, x: col })
+				this.tileGrid[row + i][col]?.setIsVisited(true)
+				i++
+			}
+
+			// Check leftwards
+			i = 1
+			while (this.isMatch(row, col - i, tile)) {
+				positions.push({ y: row, x: col - i })
+				this.tileGrid[row][col - i]?.setIsVisited(true)
+				i++
+			}
+
+			// Check rightwards
+			i = 1
+			while (this.isMatch(row, col + i, tile)) {
+				positions.push({ y: row, x: col + i })
+				this.tileGrid[row][col + i]?.setIsVisited(true)
+				i++
 			}
 		}
+
+		if (positions.length < 5) {
+			for (let i = 0; i < positions.length; i++) {
+				const position = positions[i]
+				this.tileGrid[position.y][position.x]?.setIsVisited(false)
+			}
+
+			return null
+		} else {
+			return positions
+		}
+	}
+	private checkMatchVertical(tile: Tile, lengthMatch: number): { x: number; y: number }[] | null {
+		const positions: { x: number; y: number }[] = []
+		const row = tile.getCoordinateY()
+		const col = tile.getCoordinateX()
+		if (this.isMatch(row, col, tile)) {
+			positions.push({ y: row, x: col })
+			tile.setIsVisited(true)
+			// Check upwards
+			let i = 1
+			while (this.isMatch(row - i, col, tile)) {
+				positions.push({ y: row - i, x: col })
+				this.tileGrid[row - i][col]?.setIsVisited(true)
+				i++
+			}
+
+			// Check downwards
+			i = 1
+			while (this.isMatch(row + i, col, tile)) {
+				positions.push({ y: row + i, x: col })
+				this.tileGrid[row + i][col]?.setIsVisited(true)
+				i++
+			}
+		}
+
+		if (positions.length < lengthMatch) {
+			for (let i = 0; i < positions.length; i++) {
+				const position = positions[i]
+				this.tileGrid[position.y][position.x]?.setIsVisited(false)
+			}
+
+			return null
+		} else {
+			return positions
+		}
+	}
+
+	private checkMatchHorizontal(tile: Tile, lengthMatch: number): { x: number; y: number }[] | null {
+		const positions: { x: number; y: number }[] = []
+		const row = tile.getCoordinateY()
+		const col = tile.getCoordinateX()
+		if (this.isMatch(row, col, tile)) {
+			positions.push({ y: row, x: col })
+			tile.setIsVisited(true)
+
+			// Check leftwards
+			let i = 1
+			while (this.isMatch(row, col - i, tile)) {
+				positions.push({ y: row, x: col - i })
+				this.tileGrid[row][col - i]?.setIsVisited(true)
+				i++
+			}
+
+			// Check rightwards
+			i = 1
+			while (this.isMatch(row, col + i, tile)) {
+				positions.push({ y: row, x: col + i })
+				this.tileGrid[row][col + i]?.setIsVisited(true)
+				i++
+			}
+		}
+
+		if (positions.length < lengthMatch) {
+			for (let i = 0; i < positions.length; i++) {
+				const position = positions[i]
+				this.tileGrid[position.y][position.x]?.setIsVisited(false)
+			}
+
+			return null
+		} else {
+			return positions
+		}
+	}
+
+	private checkLShape(tile: Tile): { x: number; y: number }[] | null {
+		const positions: { x: number; y: number }[] = []
+		const row = tile.getCoordinateY()
+		const col = tile.getCoordinateX()
+		if (this.isMatch(row, col, tile)) {
+			positions.push({ y: row, x: col })
+			tile.setIsVisited(true)
+			// Check vertical + horizontal arms (upward + leftward)
+			let i = 1
+			while (this.isMatch(row - i, col, tile)) {
+				positions.push({ y: row - i, x: col })
+				this.tileGrid[row - i][col]?.setIsVisited(true)
+				i++
+			}
+			if (i == 2) {
+				const pos = positions.splice(positions.length - 1, 1)
+				this.tileGrid[pos[0].y][pos[0].x]?.setIsVisited(false)
+			}
+			i = 1
+			while (this.isMatch(row, col - i, tile)) {
+				positions.push({ y: row, x: col - i })
+				this.tileGrid[row][col - i]?.setIsVisited(true)
+				i++
+			}
+			if (i == 2) {
+				const pos = positions.splice(positions.length - 1, 1)
+				this.tileGrid[pos[0].y][pos[0].x]?.setIsVisited(false)
+			}
+
+			// Check vertical + horizontal arms (upward + rightward)
+			i = 1
+			while (this.isMatch(row - i, col, tile)) {
+				positions.push({ y: row - i, x: col })
+				this.tileGrid[row - i][col]?.setIsVisited(true)
+				i++
+			}
+			if (i == 2) {
+				const pos = positions.splice(positions.length - 1, 1)
+				this.tileGrid[pos[0].y][pos[0].x]?.setIsVisited(false)
+			}
+			i = 1
+			while (this.isMatch(row, col + i, tile)) {
+				positions.push({ y: row, x: col + i })
+				this.tileGrid[row][col + i]?.setIsVisited(true)
+				i++
+			}
+			if (i == 2) {
+				const pos = positions.splice(positions.length - 1, 1)
+				this.tileGrid[pos[0].y][pos[0].x]?.setIsVisited(false)
+			}
+
+			// Check vertical + horizontal arms (downward + leftward)
+			i = 1
+			while (this.isMatch(row + i, col, tile)) {
+				positions.push({ y: row + i, x: col })
+				this.tileGrid[row + i][col]?.setIsVisited(true)
+				i++
+			}
+			if (i == 2) {
+				const pos = positions.splice(positions.length - 1, 1)
+				this.tileGrid[pos[0].y][pos[0].x]?.setIsVisited(false)
+			}
+			i = 1
+			while (this.isMatch(row, col - i, tile)) {
+				positions.push({ y: row, x: col - i })
+				this.tileGrid[row][col - i]?.setIsVisited(true)
+				i++
+			}
+			if (i == 2) {
+				const pos = positions.splice(positions.length - 1, 1)
+				this.tileGrid[pos[0].y][pos[0].x]?.setIsVisited(false)
+			}
+
+			// Check vertical + horizontal arms (downward + rightward)
+			i = 1
+			while (this.isMatch(row + i, col, tile)) {
+				positions.push({ y: row + i, x: col })
+				this.tileGrid[row + i][col]?.setIsVisited(true)
+				i++
+			}
+			if (i == 2) {
+				const pos = positions.splice(positions.length - 1, 1)
+				this.tileGrid[pos[0].y][pos[0].x]?.setIsVisited(false)
+			}
+			i = 1
+			while (this.isMatch(row, col + i, tile)) {
+				positions.push({ y: row, x: col + i })
+				this.tileGrid[row][col + i]?.setIsVisited(true)
+				i++
+			}
+			if (i == 2) {
+				const pos = positions.splice(positions.length - 1, 1)
+				this.tileGrid[pos[0].y][pos[0].x]?.setIsVisited(false)
+			}
+		}
+		if (positions.length < 5) {
+			for (let i = 0; i < positions.length; i++) {
+				const position = positions[i]
+				this.tileGrid[position.y][position.x]?.setIsVisited(false)
+			}
+
+			return null
+		} else {
+			return positions
+		}
+	}
+
+	private addMatch(positions: { x: number; y: number }[]): void {
 		const matchList = new MatchList(this.tileGrid)
-		matchList.addTile(tile)
+		for (let i = 0; i < positions.length; i++) {
+			const position = positions[i]
+			const tile = this.tileGrid[position.y][position.x]
+			matchList.addTile(tile!)
+			this.countTileLeft -= 1
+		}
 		this.matchLists.push(matchList)
+	}
+
+	public findMatches(matches: Tile[][]): void {
+		let matchFound = null
+
+		for (let row = 0; row < matches.length; row++) {
+			for (let col = 0; col < matches[row].length; col++) {
+				this.countTileLeft += 1
+			}
+		}
+		if (this.countTileLeft >= 5) {
+			for (let row = 0; row < matches.length; row++) {
+				let flag = false
+				for (let col = 0; col < matches[row].length; col++) {
+					const tile = matches[row][col]
+					if (!tile) continue
+					if (tile.getIsVisited()) continue
+					matchFound = this.checkLShape(tile)
+
+					if (matchFound != null) {
+						console.log('L shape')
+						this.addMatch(matchFound)
+						if (this.countTileLeft < 5) {
+							flag = true
+							break
+						}
+					}
+				}
+				if (flag) {
+					break
+				}
+			}
+		}
+
+		if (this.countTileLeft >= 5) {
+			for (let row = 0; row < matches.length; row++) {
+				for (let col = 0; col < matches[row].length; col++) {
+					const tile = matches[row][col]
+					if (!tile) continue
+					if (tile.getIsVisited()) continue
+					matchFound = this.checkCrossShape(tile)
+					if (matchFound != null) {
+						console.log('Cross shape')
+						this.addMatch(matchFound)
+					}
+				}
+			}
+		}
+
+		if (this.countTileLeft >= 4) {
+			for (let row = 0; row < matches.length; row++) {
+				for (let col = 0; col < matches[row].length; col++) {
+					const tile = matches[row][col]
+					if (!tile) continue
+					if (tile.getIsVisited()) continue
+					matchFound = this.checkMatchVertical(tile, 4)
+					if (matchFound != null) {
+						console.log('Vertical 4 shape')
+						this.addMatch(matchFound)
+					}
+				}
+			}
+		}
+		if (this.countTileLeft >= 4) {
+			for (let row = 0; row < matches.length; row++) {
+				for (let col = 0; col < matches[row].length; col++) {
+					const tile = matches[row][col]
+					if (!tile) continue
+					if (tile.getIsVisited()) continue
+					matchFound = this.checkMatchHorizontal(tile, 4)
+					if (matchFound != null) {
+						console.log('Horizontal 4 shape')
+						this.addMatch(matchFound)
+					}
+				}
+			}
+		}
+
+		if (this.countTileLeft >= 3) {
+			for (let row = 0; row < matches.length; row++) {
+				for (let col = 0; col < matches[row].length; col++) {
+					const tile = matches[row][col]
+					if (!tile) continue
+					if (tile.getIsVisited()) continue
+					matchFound = this.checkMatchVertical(tile, 3)
+					if (matchFound != null) {
+						console.log('Vertical 3 shape')
+						this.addMatch(matchFound)
+					}
+				}
+			}
+		}
+		if (this.countTileLeft >= 3) {
+			for (let row = 0; row < matches.length; row++) {
+				for (let col = 0; col < matches[row].length; col++) {
+					const tile = matches[row][col]
+					if (!tile) continue
+					if (tile.getIsVisited()) continue
+					matchFound = this.checkMatchHorizontal(tile, 3)
+					if (matchFound != null) {
+						console.log('Horizontal 3 shape')
+						this.addMatch(matchFound)
+					}
+				}
+			}
+		}
 	}
 	public playTween(): void {
 		this.matchLists.forEach((list) => {
@@ -41,6 +383,14 @@ class MatchesManager {
 					tileList[1].getCoordinateY() == tileList[2].getCoordinateX()
 				) {
 					this.matchLists.splice(i, 1)
+				}
+			}
+		}
+		for (let i = 0; i < this.tileGrid.length; i++) {
+			for (let j = 0; j < this.tileGrid.length; j++) {
+				const tile = this.tileGrid[i][j]
+				if (tile) {
+					tile.setIsVisited(false)
 				}
 			}
 		}
@@ -83,8 +433,12 @@ class MatchesManager {
 		}
 	}
 	public clear() {
+		if (!this.matchLists) return
 		this.matchLists.splice(0, this.matchLists.length)
-		this.matchLists = [new MatchList(this.tileGrid)]
+	}
+	public setTileGrid(tileGrid: (Tile | undefined)[][]) {
+		this.tileGrid = tileGrid
+		this.countTileLeft = 0
 	}
 }
 export default MatchesManager

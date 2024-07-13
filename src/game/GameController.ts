@@ -1,6 +1,6 @@
 import { Scene, Time } from 'phaser'
 import Tile from '../objects/Tile'
-import { CONST } from '../const/const'
+import CONST from '../const/const'
 import Shuffle from './Shuffle'
 import GridTile from '../objects/GridTile'
 import MatchesManager from '../objects/MatchesManager'
@@ -264,15 +264,12 @@ class GameController {
 			CONST.candyTypes[Phaser.Math.RND.between(0, CONST.candyTypes.length - CONST.GAME.MIN_TILES)]
 
 		// Return the created tile
-		return new Tile(
-			{
-				scene: this.scene,
-				x: x * CONST.tileWidth,
-				y: y * CONST.tileHeight,
-				texture: randomTileType,
-			},
-			randomTileType
-		)
+		return new Tile({
+			scene: this.scene,
+			x: x * CONST.tileWidth,
+			y: y * CONST.tileHeight,
+			texture: randomTileType,
+		})
 	}
 
 	/**
@@ -439,6 +436,12 @@ class GameController {
 	private checkMatches(): void {
 		this.canMove = true
 		const matches = this.getMatches(this.tileGrid)
+		for (let i = 0; i < matches.length; i++) {
+			const tempArr = matches[i]
+			for (let j = 0; j < tempArr.length; j++) {
+				const tile = tempArr[j]
+			}
+		}
 		if (matches.length > 0) {
 			this.stopIdleAndHint()
 			this.removeTileGroup(matches)
@@ -532,27 +535,14 @@ class GameController {
 	private removeTileGroup(matches: Tile[][]): void {
 		if (!this.tileGrid) return
 		this.matchesManager.clear()
-		for (let i = 0; i < matches.length; i++) {
-			const tempArr = matches[i]
-			for (let j = 0; j < tempArr.length; j++) {
-				const tile = tempArr[j]
-				if (tile.isColorBoom()) {
-					this.destroyTile(tile)
-					continue
-				}
-				this.matchesManager.addTile(tile)
-			}
-		}
-		// const now = new Date()
-		// const currentTime = now.toLocaleTimeString()
-		//console.log(currentTime)
+		this.matchesManager.setTileGrid(this.tileGrid)
+		this.matchesManager.findMatches(matches)
 		this.matchesManager.refactorMatch()
 		this.matchesManager.matchAndRemoveTiles(
 			this.tileGrid,
 			this.secondSelectedTile?.getCoordinateX()!,
 			this.secondSelectedTile?.getCoordinateY()!,
 			() => {
-				// console.log('remove and clear')
 				this.resetAndFillTile()
 			},
 			() => {
@@ -564,25 +554,6 @@ class GameController {
 		this.tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
 		tile.destroyTile()
 	}
-	// private refineMatches(matches: Tile[][]): void {
-	// 	for (let i = matches.length - 1; i >= 0; i--) {
-	// 		const tempArr = matches[i]
-	// 		for (let j = tempArr.length - 1; j >= 0; j--) {
-	// 			if(this.containTiles(matches, tempArr[j]))
-	// 		}
-	// 	}
-	// }
-	// private containTiles(matches: Tile[][], tile: Tile): boolean {
-	// 	for (let i = 0; i < matches.length; i++) {
-	// 		const tempArr = matches[i]
-	// 		for (let j = 0; j < tempArr.length; j++) {
-	// 			if (tempArr[j] == tile&&tempArr[j].getCoordinateX()!=tile.getCoordinateX()) {
-	// 				return true
-	// 			}
-	// 		}
-	// 	}
-	// 	return false
-	// }
 
 	private getMatches(tileGrid: (Tile | undefined)[][]): Tile[][] {
 		let matches: Tile[][] = []
