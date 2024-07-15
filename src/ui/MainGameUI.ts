@@ -1,6 +1,5 @@
 import { Scene } from 'phaser'
 import CONST from '../const/const'
-import CustomParticle from '../particles/CustomParticle'
 
 class MainGameUI extends Phaser.GameObjects.Container {
 	private fProgressBar: Phaser.GameObjects.Image
@@ -9,14 +8,17 @@ class MainGameUI extends Phaser.GameObjects.Container {
 	private targetScoreText: Phaser.GameObjects.Text
 	private tileTargetText: Phaser.GameObjects.Text
 	private currentScoreText: Phaser.GameObjects.Text
-
 	private dropParticle: Phaser.GameObjects.Particles.ParticleEmitter
+
+	private currentTextTween: Phaser.Tweens.Tween
+
+	private ribbon: Phaser.GameObjects.Particles.ParticleEmitter
 	constructor(scene: Scene) {
 		super(scene, 0, 0)
 		this.fProgressBar = new Phaser.GameObjects.Image(
 			this.scene,
-			CONST.UI.PROGRESS_X + 5,
-			CONST.UI.PROGRESS_Y + 3,
+			CONST.UI.PROGRESS_X + 11,
+			CONST.UI.PROGRESS_Y + 11,
 			'fprogressbar'
 		)
 		this.bProgressBar = new Phaser.GameObjects.Image(
@@ -27,13 +29,11 @@ class MainGameUI extends Phaser.GameObjects.Container {
 		)
 		this.textPanel = new Phaser.GameObjects.Image(
 			this.scene,
-			CONST.MAX_WIDTH * 0.6,
-			CONST.MAX_HEIGHT * 0.02,
+			CONST.MAX_WIDTH * 0.55,
+			CONST.MAX_HEIGHT * 0.03,
 			'panel'
 		)
-		this.fProgressBar.setScale(0.15, 0.13)
-		this.bProgressBar.scale = 0.15
-		this.textPanel.setScale(0.12, 0.1)
+		this.textPanel.setScale(0.3, 0.3)
 		this.fProgressBar.setOrigin(0, 0)
 		this.bProgressBar.setOrigin(0, 0)
 		this.textPanel.setOrigin(0, 0)
@@ -64,8 +64,8 @@ class MainGameUI extends Phaser.GameObjects.Container {
 		)
 		this.targetScoreText.setOrigin(0.5, 0.5)
 		this.currentScoreText = this.scene.add.text(
-			CONST.MAX_WIDTH * 0.27,
-			CONST.MAX_HEIGHT * 0.16,
+			CONST.MAX_WIDTH * 0.3,
+			CONST.MAX_HEIGHT * 0.17,
 			'1000',
 			textStyle
 		)
@@ -86,14 +86,14 @@ class MainGameUI extends Phaser.GameObjects.Container {
 	}
 	private initParticle(): void {
 		this.dropParticle = this.scene.add.particles(
-			this.fProgressBar.x,
-			this.fProgressBar.y - 5,
+			this.fProgressBar.x - 4,
+			this.fProgressBar.y - 8,
 			'star',
 			{
 				x: { min: 0, max: 0 },
 				y: { min: 10, max: 35 },
 				quantity: 3,
-				lifespan: 200,
+				lifespan: 300,
 				gravityX: -200,
 				scale: { min: 2, max: 3 },
 				blendMode: 'ADD',
@@ -102,28 +102,33 @@ class MainGameUI extends Phaser.GameObjects.Container {
 		)
 		this.add(this.dropParticle)
 
-		const emitterConfig = {
-			// Your emitter configuration here
-			speed: 100,
-			lifespan: 2000,
-			blendMode: 'ADD',
-		}
+		//this.setUpRibbon()
+	}
 
-		const fireworkParticle = new CustomParticle(
-			this.scene,
-			CONST.MAX_WIDTH / 2,
-			CONST.MAX_HEIGHT / 2
-		)
-		fireworkParticle.explode(100)
-		fireworkParticle.setDepth(30)
-		this.scene.add.existing(fireworkParticle)
+	private setUpRibbon(): void {
+		// this.ribbon = this.scene.add.particles(CONST.MAX_WIDTH / 2, CONST.MAX_HEIGHT / 2, 'star', {
+		// 	speed: { min: 50, max: 100 }, // Speed range of particles
+		// 	angle: [240, 260, 280, 300],
+		// 	lifespan: 3000, // Lifespan of particles in milliseconds
+		// 	quantity: 4, // Number of particles emitted per call
+		// 	frequency: 50, // Emit particles every 50ms (higher frequency for smoother effect)
+		// 	blendMode: 'ADD', // Blend mode for particles (ADD for glowing effect)
+		// 	alpha: { start: 1, end: 0 }, // Fade out particles over their lifespan
+		// 	gravityY: -50, // Optional: Apply negative gravity to simulate upward motion
+		// 	scaleX: 0.3,
+		// 	scaleY: 2,
+		// })
+		// this.ribbon.parot
+		// this.ribbon.particleClass = RibbonParticle
+		// this.ribbon.setDepth(40)
+		// this.ribbon.setScale(10)
 	}
 	public toggleDropParticle(state: boolean): void {
 		this.dropParticle.setVisible(state)
 		this.dropParticle.setActive(state)
 	}
 	public setProgressBarValue(factor: number): void {
-		const xScale = factor * 0.15
+		const xScale = factor
 		this.scene.add.tween({
 			targets: this.fProgressBar,
 			scaleX: xScale,
@@ -132,7 +137,13 @@ class MainGameUI extends Phaser.GameObjects.Container {
 			repeat: 0,
 			yoyo: false,
 			onUpdate: () => {
-				this.dropParticle.x = this.fProgressBar.x + this.fProgressBar.displayWidth
+				if (this.fProgressBar.scaleX > 0.5) {
+					this.dropParticle.x = this.fProgressBar.x + this.fProgressBar.displayWidth - 2.7
+					this.dropParticle.lifespan = 300
+				} else {
+					this.dropParticle.x = this.fProgressBar.x + this.fProgressBar.displayWidth
+					this.dropParticle.lifespan = 200
+				}
 			},
 			onComplete: () => {
 				this.toggleDropParticle(factor > 0)
@@ -143,17 +154,21 @@ class MainGameUI extends Phaser.GameObjects.Container {
 		this.targetScoreText.text = text
 	}
 	public setCurrentText(text: string): void {
-		this.scene.add.tween({
-			targets: this.currentScoreText,
-			scale: 2,
-			ease: 'Linear',
-			duration: 100,
-			repeat: 0,
-			yoyo: true,
-			onComplete: () => {
-				this.currentScoreText.text = text
-			},
-		})
+		if (this.currentTextTween && this.currentTextTween.isPlaying()) {
+			this.currentScoreText.text = text
+		} else {
+			this.currentTextTween = this.scene.add.tween({
+				targets: this.currentScoreText,
+				scale: 2,
+				ease: 'Linear',
+				duration: 100,
+				repeat: 0,
+				yoyo: true,
+				onComplete: () => {
+					this.currentScoreText.text = text
+				},
+			})
+		}
 	}
 }
 export default MainGameUI

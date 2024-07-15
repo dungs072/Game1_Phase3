@@ -3,68 +3,105 @@
 		"files": [
 			{
 				"type": "image",
-				"key": "cookie1",
-				"url": "assets/images2/3.png"
+				"key": "1",
+				"url": "assets/images3/1.png"
 			},
 			{
 				"type": "image",
-				"key": "cookie2",
-				"url": "assets/images2/15.png"
+				"key": "2",
+				"url": "assets/images3/2.png"
 			},
 			{
 				"type": "image",
-				"key": "croissant",
-				"url": "assets/images2/5.png"
+				"key": "3",
+				"url": "assets/images3/3.png"
 			},
 			{
 				"type": "image",
-				"key": "cupcake",
-				"url": "assets/images2/6.png"
+				"key": "4",
+				"url": "assets/images3/4.png"
 			},
 			{
 				"type": "image",
-				"key": "donut",
-				"url": "assets/images2/7.png"
+				"key": "5",
+				"url": "assets/images3/5.png"
 			},
 			{
 				"type": "image",
-				"key": "eclair",
-				"url": "assets/images2/8.png"
+				"key": "6",
+				"url": "assets/images3/6.png"
 			},
-			{
-				"type": "image",
-				"key": "macaroon",
-				"url": "assets/images2/9.png"
-			},
-			{
-				"type": "image",
-				"key": "pie",
-				"url": "assets/images2/10.png"
-			},
-			{
-				"type": "image",
-				"key": "poptart1",
-				"url": "assets/images2/11.png"
-			},
-			{
-				"type": "image",
-				"key": "poptart2",
-				"url": "assets/images2/12.png"
-			},
-			{
-				"type": "image",
-				"key": "starcookie1",
-				"url": "assets/images2/13.png"
-			},
-			{
-				"type": "image",
-				"key": "starcookie2",
-				"url": "assets/images2/14.png"
-			},
+
 			{
 				"type": "image",
 				"key": "colorboom",
-				"url": "assets/images2/19.png"
+				"url": "assets/images3/colorBoom.png"
+			}
+		]
+	},
+
+	"preloadSpecial": {
+		"files": [
+			{
+				"type": "image",
+				"key": "1_horiz",
+				"url": "assets/specialTiles/1_horiz.png"
+			},
+			{
+				"type": "image",
+				"key": "1_vert",
+				"url": "assets/specialTiles/1_vert.png"
+			},
+			{
+				"type": "image",
+				"key": "2_horiz",
+				"url": "assets/specialTiles/2_horiz.png"
+			},
+			{
+				"type": "image",
+				"key": "2_vert",
+				"url": "assets/specialTiles/2_vert.png"
+			},
+			{
+				"type": "image",
+				"key": "3_horiz",
+				"url": "assets/specialTiles/3_horiz.png"
+			},
+			{
+				"type": "image",
+				"key": "3_vert",
+				"url": "assets/specialTiles/3_vert.png"
+			},
+
+			{
+				"type": "image",
+				"key": "4_horiz",
+				"url": "assets/specialTiles/4_horiz.png"
+			},
+			{
+				"type": "image",
+				"key": "4_vert",
+				"url": "assets/specialTiles/4_vert.png"
+			},
+			{
+				"type": "image",
+				"key": "5_horiz",
+				"url": "assets/specialTiles/5_horiz.png"
+			},
+			{
+				"type": "image",
+				"key": "5_vert",
+				"url": "assets/specialTiles/5_vert.png"
+			},
+			{
+				"type": "image",
+				"key": "6_horiz",
+				"url": "assets/specialTiles/6_horiz.png"
+			},
+			{
+				"type": "image",
+				"key": "6_vert",
+				"url": "assets/specialTiles/6_vert.png"
 			}
 		]
 	}

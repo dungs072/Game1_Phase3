@@ -42,6 +42,7 @@ class BootScene extends Phaser.Scene {
 		// load out package
 
 		this.load.pack('preload', 'assets/pack.json', 'preload')
+		this.load.pack('preloadSpecial', 'assets/pack.json', 'preloadSpecial')
 		// this.load.spritesheet('smokeEffect', 'assets/effects/smokeEffect.png', {
 		// 	frameWidth: 20,
 		// 	frameHeight: 20,
@@ -54,9 +55,13 @@ class BootScene extends Phaser.Scene {
 		this.load.image('bprogressbar', 'assets/ui/progress/bar_1.png')
 		this.load.image('fprogressbar', 'assets/ui/progress/bar_2.png')
 		this.load.image('panel', 'assets/ui/panel/f.png')
+		this.load.image('panelfg', 'assets/ui/panel/fg.png')
 
+		this.load.image('conffeti', 'assets/particles/conffeti.png')
 		this.load.image('star', 'assets/particles/star4.png')
-		this.load.image('jelly', 'assets/jelly/jellyYellow.png')
+		this.load.image('character', 'assets/ui/main/character_info.png')
+		this.load.image('star02', 'assets/ui/main/star_02.png')
+		this.load.image('good', 'assets/ui/main/text_2.png')
 	}
 	create() {}
 

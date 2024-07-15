@@ -5,21 +5,7 @@ let CONST = {
 	gridHeight: 8,
 	tileWidth: 67,
 	tileHeight: 67,
-	candyTypes: [
-		'cookie1',
-		'cookie2',
-		'croissant',
-		'cupcake',
-		'donut',
-		'eclair',
-		'macaroon',
-		'pie',
-		'poptart1',
-		'poptart2',
-		'starcookie1',
-		'starcookie2',
-		'colorboom',
-	],
+	candyTypes: ['1', '2', '3', '4', '5', '6', 'colorboom'],
 
 	MAX_WIDTH: 640,
 	MAX_HEIGHT: 768,
@@ -29,15 +15,16 @@ let CONST = {
 		MAX_TIME_TRIGGER_HINT: 5,
 		START_GRID_X: 85,
 		START_GRID_Y: 200,
-		MIN_TILES: 7,
+		MIN_TILES: 5, //2->7
 	},
 
 	TILE: {
 		SHAKE_INTENSITY: 5,
-		HOVER_SCALE: 0.53,
+		HOVER_SCALE: 0.45,
 	},
 	MATCH: {
 		SIZE_BOOM: 2,
+		DELAYTIME: 50,
 	},
 	UI: {
 		PROGRESS_X: 40,

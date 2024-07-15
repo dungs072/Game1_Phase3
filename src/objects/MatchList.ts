@@ -1,15 +1,23 @@
+import { Scene } from 'phaser'
 import CONST from '../const/const'
 import ScoreManager from '../score/ScoreManager'
 import Tile from './Tile'
+import MatchesManager from './MatchesManager'
+import GameController from '../game/GameController'
 
 class MatchList {
 	private tiles: Tile[]
 	private countTile: number
 	public centerTile: Tile
+	private scene: Scene
+	private timedEvent: Phaser.Time.TimerEvent
+	private matchManager: MatchesManager
 	private tileGrid: (Tile | undefined)[][]
-	constructor(tileGrid: (Tile | undefined)[][]) {
+	constructor(scene: Scene, matchManager: MatchesManager, tileGrid: (Tile | undefined)[][]) {
 		this.tiles = []
 		this.tileGrid = tileGrid
+		this.scene = scene
+		this.matchManager = matchManager
 	}
 	public debugMatch(): void {
 		for (let i = 0; i < this.tiles.length; i++) {
@@ -27,40 +35,134 @@ class MatchList {
 			tile.test()
 		})
 	}
-	public destroyAllTiles(tileGrid: (Tile | undefined)[][]): void {
+	public async destroyAllTiles(
+		tileGrid: (Tile | undefined)[][],
+		callback: Function
+	): Promise<void> {
+		ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, this.tiles.length * 3)
 		for (let i = this.tiles.length - 1; i >= 0; i--) {
 			const tile = this.tiles[i]
 			if (tile.getMatchCount() == 4) {
-				this.handleBoomMatchFour(tile, tileGrid)
-			} else if (tile.getMatchCount() >= 5) {
-				this.handleBoomMatchFive(tileGrid)
-			} else {
-				tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
-				tile.destroyTile()
+				this.matchManager.setIsProcess(true)
+				break
 			}
 		}
-		ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, this.tiles.length * 3)
-	}
-	public handleBoomMatchFour(tile: Tile, tileGrid: (Tile | undefined)[][]): void {
-		if (tile.getHorizontal()) {
-			for (let i = 0; i < CONST.gridWidth; i++) {
-				const tempTile = tileGrid[tile.getCoordinateY()][i]
-				tileGrid[tile.getCoordinateY()][i] = undefined
-
-				tempTile?.destroyTile()
+		if (this.matchManager.getIsProcess()) {
+			return new Promise<void>((resolve) => {
+				for (let i = this.tiles.length - 1; i >= 0; i--) {
+					const tile = this.tiles[i]
+					if (tile.getMatchCount() == 4) {
+						this.handleBoomMatchFour(tile, tileGrid, callback)
+					}
+				}
+				resolve()
+			}).then(() => {
+				for (let i = this.tiles.length - 1; i >= 0; i--) {
+					const tile = this.tiles[i]
+					if (tile == undefined) continue
+					if (tile.getMatchCount() >= 5) {
+						this.handleBoomMatchFive(tileGrid)
+					} else {
+						tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
+						tile.destroyTile()
+					}
+				}
+			})
+		} else {
+			for (let i = this.tiles.length - 1; i >= 0; i--) {
+				const tile = this.tiles[i]
+				if (tile.getMatchCount() >= 5) {
+					this.handleBoomMatchFive(tileGrid)
+				} else {
+					tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
+					tile.destroyTile()
+				}
 			}
+		}
+	}
+	private wait(duration: number): Promise<void> {
+		return new Promise((resolve) => {
+			this.timedEvent = this.scene.time.delayedCall(duration, () => {
+				resolve()
+			})
+		})
+	}
+	private async processHorizontalTiles(xCoordinate: number, yCoordinate: number): Promise<void> {
+		const tempTile = this.tileGrid[yCoordinate][xCoordinate]
+		tempTile?.destroyTile(true)
+		let i = xCoordinate - 1
+		let j = xCoordinate + 1
+		let countTime = 1
+		while (i >= 0 || j < CONST.gridWidth) {
+			await this.wait(CONST.MATCH.DELAYTIME * countTime)
+			countTime++
+			this.processTile(i, yCoordinate)
+			this.processTile(j, yCoordinate)
+			i--
+			j++
+		}
+		for (let i = 0; i < CONST.gridWidth; i++) {
+			this.tileGrid[yCoordinate][i] = undefined
+		}
+		this.tiles.forEach((tempTile) => {
+			this.tileGrid[tempTile.getCoordinateY()][tempTile.getCoordinateX()] = undefined
+		})
+	}
+	private async processVerticalTiles(xCoordinate: number, yCoordinate: number): Promise<void> {
+		const tempTile = this.tileGrid[yCoordinate][xCoordinate]
+		tempTile?.destroyTile(true)
+
+		let i = yCoordinate - 1
+		let j = yCoordinate + 1
+		let countTime = 1
+		while (i >= 0 || j < CONST.gridHeight) {
+			await this.wait(CONST.MATCH.DELAYTIME * countTime)
+			countTime++
+			this.processTile(xCoordinate, i)
+			this.processTile(xCoordinate, j)
+			i--
+			j++
+		}
+		for (let i = 0; i < CONST.gridHeight; i++) {
+			this.tileGrid[i][xCoordinate] = undefined
+		}
+		this.tiles.forEach((tempTile) => {
+			this.tileGrid[tempTile.getCoordinateY()][tempTile.getCoordinateX()] = undefined
+		})
+	}
+	private processTile(xCoordinate: number, yCoordinate: number): void {
+		if (
+			xCoordinate < 0 ||
+			xCoordinate >= CONST.gridWidth ||
+			yCoordinate < 0 ||
+			yCoordinate >= CONST.gridHeight
+		)
+			return
+		const tempTile = this.tileGrid[yCoordinate][xCoordinate]
+		tempTile?.destroyTile(true)
+	}
+	public async handleBoomMatchFour(
+		tile: Tile,
+		tileGrid: (Tile | undefined)[][],
+		callback: Function
+	): Promise<void> {
+		if (tile.getHorizontal()) {
+			const yCoordinate = tile.getCoordinateY()
+			const xCoordinate = tile.getCoordinateX()
+			this.processHorizontalTiles(xCoordinate, yCoordinate).then(() => {
+				this.matchManager.setIsProcess(false)
+				GameController.eventEmitter.emit('resettile')
+			})
 			ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, CONST.gridWidth)
 		} else {
-			for (let i = 0; i < CONST.gridHeight; i++) {
-				const tempTile = tileGrid[i][tile.getCoordinateX()]
-				tileGrid[i][tile.getCoordinateX()] = undefined
-				tempTile?.destroyTile()
-			}
+			const yCoordinate = tile.getCoordinateY()
+			const xCoordinate = tile.getCoordinateX()
+			this.processVerticalTiles(xCoordinate, yCoordinate).then(() => {
+				this.matchManager.setIsProcess(false)
+				GameController.eventEmitter.emit('resettile')
+			})
 			ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, CONST.gridHeight)
 		}
-
-		tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
-		tile.destroyTile()
 	}
 	private handleBoomMatchFive(
 		tileGrid: (Tile | undefined)[][],
@@ -103,7 +205,8 @@ class MatchList {
 		tileGrid: (Tile | undefined)[][],
 		xCoordinate: number,
 		yCoordinate: number,
-		finishCallback: Function | undefined = undefined
+		finishCallback: Function | undefined = undefined,
+		anotherCallback: Function
 	): number {
 		if (this.tiles.length <= 3) {
 			return 0
@@ -118,9 +221,8 @@ class MatchList {
 
 		for (let i = 0; i < this.tiles.length; i++) {
 			if (this.tiles[i].getMatchCount() == 4) {
+				this.handleBoomMatchFour(this.tiles[i], tileGrid, anotherCallback)
 				this.destroyAllTilesExcept(this.tiles[i], tileGrid)
-				this.handleBoomMatchFour(this.tiles[i], tileGrid)
-
 				return 0
 			} else if (this.tiles[i].getMatchCount() >= 5) {
 				this.destroyAllTilesExcept(this.tiles[i], tileGrid)
@@ -163,7 +265,7 @@ class MatchList {
 		}
 
 		tempTileList.forEach((tile) => {
-			centerTile.setHorizontal(centerTile.getCoordinateX() == tile.getCoordinateX())
+			centerTile.setHorizontal(centerTile.getCoordinateX() != tile.getCoordinateX())
 			centerTile.setMatchCount(centerTile.getMatchCount() + tile.getMatchCount())
 			tile.setSpeed(0.7)
 			tile.moveToTarget(centerTile.getCoordinateX(), centerTile.getCoordinateY(), () => {
@@ -182,7 +284,16 @@ class MatchList {
 			})
 		})
 		if (centerTile.isColorBoom()) {
-			centerTile.setTexture('colorboom')
+			if (centerTile) {
+				centerTile.setTexture('colorboom')
+				centerTile.setChildrenTile('colorboom')
+			}
+		} else {
+			if (centerTile.getHorizontal()) {
+				centerTile.setTexture(centerTile.texture.key + '_horiz')
+			} else {
+				centerTile.setTexture(centerTile.texture.key + '_vert')
+			}
 		}
 		centerTile.setIsVisited(false)
 		ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, tempTileList.length * 5)
@@ -256,7 +367,7 @@ class MatchList {
 	private destroyAllTilesExcept(tile: Tile, tileGrid: (Tile | undefined)[][]): void {
 		this.tiles.forEach((tempTile) => {
 			if (tempTile != tile) {
-				tileGrid[tempTile.getCoordinateY()][tempTile.getCoordinateX()] = undefined
+				//tileGrid[tempTile.getCoordinateY()][tempTile.getCoordinateX()] = undefined
 				tempTile.destroyTile()
 			}
 		})

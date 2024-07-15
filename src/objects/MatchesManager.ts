@@ -1,3 +1,4 @@
+import { Scene } from 'phaser'
 import CONST from '../const/const'
 import MatchList from './MatchList'
 import Tile from './Tile'
@@ -6,9 +7,31 @@ class MatchesManager {
 	private matchLists: MatchList[]
 	private tileGrid: (Tile | undefined)[][]
 	private countTileLeft: number
-	constructor(tileGrid: (Tile | undefined)[][]) {
+	private isProcessing: boolean
+	private scene: Scene
+	constructor(scene: Scene, tileGrid: (Tile | undefined)[][]) {
 		this.tileGrid = tileGrid
 		this.matchLists = []
+		this.scene = scene
+		this.isProcessing = false
+	}
+	public setIsProcess(state: boolean): void {
+		const now = new Date()
+		const hours = now.getHours()
+		const minutes = now.getMinutes()
+		const seconds = now.getSeconds()
+
+		// Pad single-digit minutes and seconds with a leading zero
+		const paddedMinutes = minutes < 10 ? `0${minutes}` : minutes
+		const paddedSeconds = seconds < 10 ? `0${seconds}` : seconds
+
+		const currentTime = `${hours}:${paddedMinutes}:${paddedSeconds}`
+		console.log(`Current Time: ${currentTime}`)
+		console.log('set process', state)
+		this.isProcessing = state
+	}
+	public getIsProcess(): boolean {
+		return this.isProcessing
 	}
 
 	public isMatch(row: number, col: number, potentialTile: Tile): boolean {
@@ -18,7 +41,8 @@ class MatchesManager {
 			col >= 0 &&
 			col < CONST.gridWidth &&
 			!this.tileGrid[row][col]?.getIsVisited() &&
-			this.tileGrid[row][col]?.getTypeTile() == potentialTile.getTypeTile()
+			(this.tileGrid[row][col]?.getTypeTile() == potentialTile.getTypeTile() ||
+				this.tileGrid[row][col]?.getChildTexture() == potentialTile.getChildTexture())
 		)
 	}
 
@@ -254,7 +278,7 @@ class MatchesManager {
 	}
 
 	private addMatch(positions: { x: number; y: number }[]): void {
-		const matchList = new MatchList(this.tileGrid)
+		const matchList = new MatchList(this.scene, this, this.tileGrid)
 		for (let i = 0; i < positions.length; i++) {
 			const position = positions[i]
 			const tile = this.tileGrid[position.y][position.x]
@@ -304,7 +328,6 @@ class MatchesManager {
 					if (tile.getIsVisited()) continue
 					matchFound = this.checkCrossShape(tile)
 					if (matchFound != null) {
-						console.log('Cross shape')
 						this.addMatch(matchFound)
 					}
 				}
@@ -319,7 +342,6 @@ class MatchesManager {
 					if (tile.getIsVisited()) continue
 					matchFound = this.checkMatchVertical(tile, 4)
 					if (matchFound != null) {
-						console.log('Vertical 4 shape')
 						this.addMatch(matchFound)
 					}
 				}
@@ -333,7 +355,6 @@ class MatchesManager {
 					if (tile.getIsVisited()) continue
 					matchFound = this.checkMatchHorizontal(tile, 4)
 					if (matchFound != null) {
-						console.log('Horizontal 4 shape')
 						this.addMatch(matchFound)
 					}
 				}
@@ -348,7 +369,6 @@ class MatchesManager {
 					if (tile.getIsVisited()) continue
 					matchFound = this.checkMatchVertical(tile, 3)
 					if (matchFound != null) {
-						console.log('Vertical 3 shape')
 						this.addMatch(matchFound)
 					}
 				}
@@ -362,7 +382,6 @@ class MatchesManager {
 					if (tile.getIsVisited()) continue
 					matchFound = this.checkMatchHorizontal(tile, 3)
 					if (matchFound != null) {
-						console.log('Horizontal 3 shape')
 						this.addMatch(matchFound)
 					}
 				}
@@ -399,7 +418,7 @@ class MatchesManager {
 		tileGrid: (Tile | undefined)[][],
 		xMergeCoordinate: number,
 		yMergeCoordinate: number,
-		callback: Function | undefined = undefined,
+		callback: Function,
 		anotherCallback: Function | undefined = undefined
 	): void {
 		let count = 0
@@ -411,17 +430,23 @@ class MatchesManager {
 		for (let i = this.matchLists.length - 1; i >= 0; i--) {
 			const matchList = this.matchLists[i].getTiles()
 			if (matchList.length == 3) {
-				this.matchLists[i].destroyAllTiles(tileGrid)
+				this.matchLists[i].destroyAllTiles(tileGrid, callback)
 			} else if (matchList.length > 3) {
-				count += this.matchLists[i].mergeTiles(tileGrid, xMergeCoordinate, yMergeCoordinate, () => {
-					count--
+				count += this.matchLists[i].mergeTiles(
+					tileGrid,
+					xMergeCoordinate,
+					yMergeCoordinate,
+					() => {
+						count--
 
-					if (count == 0) {
-						if (callback) {
-							callback()
+						if (count == 0) {
+							if (callback) {
+								callback()
+							}
 						}
-					}
-				})
+					},
+					anotherCallback!
+				)
 			}
 		}
 		this.clear()

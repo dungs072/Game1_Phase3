@@ -1,18 +1,25 @@
 import { Scene } from 'phaser'
 import CONST from '../const/const'
+import FireworkParticle from '../particles/FireworkParticle'
 
 class NotificationUI extends Phaser.GameObjects.Container {
+	private rainbowColors = [0xff69b4, 0xffa500, 0xffff00, 0x00ff00, 0x87ceeb, 0xba55d3, 0xff1493]
 	private mainPanel: Phaser.GameObjects.Image
 	private titleText: Phaser.GameObjects.Text
 	private infoText: Phaser.GameObjects.Text
 
-	private jelly: Phaser.GameObjects.Image
+	private character: Phaser.GameObjects.Image
+	private goodText: Phaser.GameObjects.Image
+
 	private timedEvent: Phaser.Time.TimerEvent
+
+	private fireworkLeft: Phaser.GameObjects.Particles.ParticleEmitter
+	private fireworkRight: Phaser.GameObjects.Particles.ParticleEmitter
 
 	private blackout: Phaser.GameObjects.Graphics
 	constructor(scene: Scene) {
 		super(scene)
-		this.mainPanel = this.scene.add.image(CONST.MAX_WIDTH / 2, CONST.MAX_HEIGHT / 2, 'panel')
+		this.mainPanel = this.scene.add.image(CONST.MAX_WIDTH / 2, CONST.MAX_HEIGHT / 2, 'panelfg')
 		this.mainPanel.setScale(0.4, 0.25)
 		this.mainPanel.setOrigin(0.5, 0.5)
 		this.add(this.mainPanel)
@@ -54,9 +61,13 @@ class NotificationUI extends Phaser.GameObjects.Container {
 		this.infoText.setOrigin(0.5, 0.5)
 		this.add(this.infoText)
 
-		this.jelly = this.scene.add.image(-50, CONST.MAX_HEIGHT / 2, 'jelly')
-		this.jelly.scale = 1.4
-		this.add(this.jelly)
+		this.character = this.scene.add.image(-50, CONST.MAX_HEIGHT / 2, 'character')
+		this.character.scale = 0.3
+		this.add(this.character)
+
+		this.goodText = this.scene.add.image(CONST.MAX_WIDTH / 2, CONST.MAX_HEIGHT / 2, 'good')
+		this.goodText.scale = 0.5
+		this.add(this.goodText)
 
 		this.setDepth(20)
 		this.scene.add.existing(this)
@@ -64,6 +75,9 @@ class NotificationUI extends Phaser.GameObjects.Container {
 		this.scale = 0
 		this.setVisible(false)
 		this.blackout.setVisible(false)
+
+		this.setUpLeftFireWork()
+		this.setUpRightFirework()
 		//this.toggleUI(false)
 		//this.toggleUI(true)
 	}
@@ -81,14 +95,16 @@ class NotificationUI extends Phaser.GameObjects.Container {
 				onComplete: () => {
 					this.setVisible(state)
 					this.scene.add.tween({
-						targets: this.jelly,
-						x: CONST.MAX_WIDTH / 2,
+						targets: this.character,
+						x: CONST.MAX_WIDTH * 0.18,
 						ease: 'bounce.out',
 						duration: 1000,
 						repeat: 0,
 						yoyo: false,
 						onComplete: () => {
 							this.setVisible(state)
+							this.fireworkLeft.explode(25)
+							this.fireworkRight.explode(25)
 							this.timedEvent = this.scene.time.delayedCall(
 								3000,
 								() => {
@@ -114,11 +130,63 @@ class NotificationUI extends Phaser.GameObjects.Container {
 						turnOffCallBack()
 					}
 					this.setVisible(state)
-					this.jelly.x = -50
+					this.character.x = -50
 				},
 			})
 		}
 	}
+
+	private setUpLeftFireWork(): void {
+		const config: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig = {
+			lifespan: 1500,
+			speed: { min: 200, max: 250 },
+			angle: { min: 260, max: 320 },
+			gravityY: 400,
+			quantity: 10,
+			// alpha: { start: 1, end: 0.3 },
+			scaleX: { min: 0.5, max: 1 },
+			scaleY: { min: 0.5, max: 1 },
+			tint: () => Phaser.Math.RND.pick(this.rainbowColors),
+		}
+
+		this.fireworkLeft = this.scene.add.particles(
+			CONST.MAX_WIDTH * 0.1,
+			CONST.MAX_HEIGHT * 0.7,
+			'star',
+			config
+		)
+		this.fireworkLeft.setDepth(40)
+		this.fireworkLeft.particleClass = FireworkParticle
+		this.fireworkLeft.setScale(10)
+		this.fireworkLeft.stop()
+		this.scene.add.existing(this.fireworkLeft)
+	}
+	public setUpRightFirework(): void {
+		const config: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig = {
+			lifespan: 2000,
+			speed: { min: 200, max: 250 },
+			angle: { min: 210, max: 270 },
+			gravityY: 400,
+			quantity: 10,
+			// alpha: { start: 1, end: 0.3 },
+			scaleX: { min: 0.5, max: 1 },
+			scaleY: { min: 0.5, max: 1 },
+			tint: () => Phaser.Math.RND.pick(this.rainbowColors),
+		}
+
+		this.fireworkRight = this.scene.add.particles(
+			CONST.MAX_WIDTH * 0.9,
+			CONST.MAX_HEIGHT * 0.7,
+			'star',
+			config
+		)
+		this.fireworkRight.setDepth(40)
+		this.fireworkRight.particleClass = FireworkParticle
+		this.fireworkRight.setScale(10)
+		this.fireworkRight.stop()
+		this.scene.add.existing(this.fireworkRight)
+	}
+
 	public setTitleText(text: string) {
 		this.titleText.text = text
 	}

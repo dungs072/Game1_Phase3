@@ -9,6 +9,8 @@ class Tile extends Phaser.GameObjects.Sprite {
 	private matchCount: number
 	private isHorizontal: boolean
 	private isVisited: boolean
+	private maxScale: number
+	private childTexture: string
 
 	constructor(params: ImageConstructor) {
 		super(
@@ -18,10 +20,12 @@ class Tile extends Phaser.GameObjects.Sprite {
 			params.texture,
 			params.frame
 		)
-		this.speed = 0.4
-		this.scale = 0.45
+		this.maxScale = 0.38
+		this.speed = 0.3
+		this.scale = this.maxScale
 		this.matchCount = 1
 		this.isVisited = false
+		this.childTexture = this.texture.key
 		this.setOrigin(0.5, 0.5)
 		this.initAnimation()
 		this.initGlow()
@@ -39,6 +43,9 @@ class Tile extends Phaser.GameObjects.Sprite {
 	}
 	public setHorizontal(state: boolean): void {
 		this.isHorizontal = state
+	}
+	public setChildrenTile(key: string): void {
+		this.childTexture = key
 	}
 	public getHorizontal(): boolean {
 		return this.isHorizontal
@@ -61,6 +68,12 @@ class Tile extends Phaser.GameObjects.Sprite {
 	public hasSameTypeTile(otherTypeTile: string): boolean {
 		return this.texture.key == otherTypeTile
 	}
+	public hasSameChildTypeTile(otherTypeTile: string): boolean {
+		return this.childTexture == otherTypeTile
+	}
+	public getChildTexture(): string {
+		return this.childTexture
+	}
 	public getTypeTile(): string {
 		return this.texture.key
 	}
@@ -76,7 +89,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 			frame: ['red', 'yellow', 'green'],
 			lifespan: 1000,
 			speed: { min: 150, max: 250 },
-			scale: { start: 0.45, end: 0 },
+			scale: { start: this.maxScale, end: 0 },
 			x: 0,
 			y: 0,
 			gravityY: 150,
@@ -117,7 +130,40 @@ class Tile extends Phaser.GameObjects.Sprite {
 			},
 		})
 	}
+	public moveToTargetBackout(
+		xCoordinate: number,
+		yCoordinate: number,
+		callback: Function | undefined = undefined,
+		ease = 'Linear'
+	): Phaser.Tweens.Tween | undefined {
+		if (!this.scene) return undefined
+		let duration =
+			Math.abs(yCoordinate * CONST.tileHeight + CONST.GAME.START_GRID_Y - this.y) / this.speed
+		if (this.getCoordinateY() == yCoordinate) {
+			duration =
+				Math.abs(xCoordinate * CONST.tileWidth + CONST.GAME.START_GRID_X - this.x) / this.speed
+		}
+		return this.scene.add.tween({
+			targets: this,
+			x: CONST.tileHeight * xCoordinate + CONST.GAME.START_GRID_X,
+			y: CONST.tileHeight * yCoordinate + CONST.GAME.START_GRID_Y,
+			ease: this.customOut,
+			duration: duration,
+			repeat: 0,
+			yoyo: false,
+			onComplete: () => {
+				if (callback) {
+					callback()
+				}
+			},
+		})
+	}
+	private customOut(v: number): number {
+		const overshoot = 1.5
+		return 1 - Math.pow(1 - v, 2) * ((overshoot + 1) * (1 - v) - overshoot)
+	}
 	public clickEffect(callback: Function | undefined = undefined): void {
+		if (!this.scene) return
 		this.scene.add.tween({
 			targets: this,
 			scale: 0.7,
@@ -133,6 +179,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 		})
 	}
 	public triggerIdleTile(index: number): void {
+		if (!this.scene) return
 		this.scene.tweens.add({
 			targets: this,
 			scale: 0.6,
@@ -154,6 +201,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 		})
 	}
 	public shakeTile(): void {
+		if (!this.scene) return
 		this.scene.tweens.add({
 			targets: this,
 			x: this.x + CONST.TILE.SHAKE_INTENSITY,
@@ -164,6 +212,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 		})
 	}
 	public hoverIn(): void {
+		if (!this.scene) return
 		this.scene.tweens.add({
 			targets: this,
 			scale: CONST.TILE.HOVER_SCALE,
@@ -178,7 +227,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 		}
 		this.scene.tweens.add({
 			targets: this,
-			scale: 0.45,
+			scale: this.maxScale,
 			duration: 50,
 			yoyo: false,
 			repeat: 0,
@@ -197,7 +246,8 @@ class Tile extends Phaser.GameObjects.Sprite {
 			})
 		}
 	}
-	public destroyTile(): void {
+	public destroyTile(isProcess = false): void {
+		if (!this.scene) return
 		this.destroyEffect.explode(16)
 		this.destroyEffect.setPosition(this.x, this.y)
 		this.scene.add.tween({
@@ -214,7 +264,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 	}
 	public resetTile(): void {
 		this.angle = 0
-		this.scale = 0.45
+		this.scale = this.maxScale
 	}
 	public isColorBoom(): boolean {
 		return this.matchCount >= 5
