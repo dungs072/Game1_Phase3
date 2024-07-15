@@ -518,7 +518,6 @@ class GameController {
 	private resetAndFillTile(): void {
 		// Loop through each column starting from the left
 		// map: x, tile bottom, blank tile
-		console.log(this.matchesManager.getIsProcess())
 		if (this.matchesManager.getIsProcess()) return
 		let coordinates = new Map<number, number[]>()
 		let count = 0
