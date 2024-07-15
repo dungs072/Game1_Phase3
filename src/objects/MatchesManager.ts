@@ -7,31 +7,30 @@ class MatchesManager {
 	private matchLists: MatchList[]
 	private tileGrid: (Tile | undefined)[][]
 	private countTileLeft: number
-	private isProcessing: boolean
+	private processingList: number[]
 	private scene: Scene
 	constructor(scene: Scene, tileGrid: (Tile | undefined)[][]) {
 		this.tileGrid = tileGrid
 		this.matchLists = []
+		this.processingList = []
 		this.scene = scene
-		this.isProcessing = false
 	}
-	public setIsProcess(state: boolean): void {
-		const now = new Date()
-		const hours = now.getHours()
-		const minutes = now.getMinutes()
-		const seconds = now.getSeconds()
-
-		// Pad single-digit minutes and seconds with a leading zero
-		const paddedMinutes = minutes < 10 ? `0${minutes}` : minutes
-		const paddedSeconds = seconds < 10 ? `0${seconds}` : seconds
-
-		const currentTime = `${hours}:${paddedMinutes}:${paddedSeconds}`
-		console.log(`Current Time: ${currentTime}`)
-		console.log('set process', state)
-		this.isProcessing = state
+	public addProcessing(state: boolean): void {
+		if (state) {
+			this.processingList.push(1)
+		} else {
+			if (this.processingList.length > 0) {
+				this.processingList.splice(0, 1)
+			} else {
+				console.log('empty list')
+			}
+		}
 	}
 	public getIsProcess(): boolean {
-		return this.isProcessing
+		return this.processingList.length > 0
+	}
+	public getLengthProcess(): number {
+		return this.processingList.length
 	}
 
 	public isMatch(row: number, col: number, potentialTile: Tile): boolean {
@@ -422,6 +421,7 @@ class MatchesManager {
 		anotherCallback: Function | undefined = undefined
 	): void {
 		let count = 0
+		if (this.getIsProcess()) return
 		if (this.matchLists.length == 0) {
 			if (anotherCallback) {
 				anotherCallback()
@@ -460,6 +460,7 @@ class MatchesManager {
 	public clear() {
 		if (!this.matchLists) return
 		this.matchLists.splice(0, this.matchLists.length)
+		//this.processingList.splice(0, this.processingList.length)
 	}
 	public setTileGrid(tileGrid: (Tile | undefined)[][]) {
 		this.tileGrid = tileGrid

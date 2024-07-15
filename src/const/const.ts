@@ -24,7 +24,8 @@ let CONST = {
 	},
 	MATCH: {
 		SIZE_BOOM: 2,
-		DELAYTIME: 50,
+		DELAYTIME: 150,
+		DELAYTIMEFILL: 200,
 	},
 	UI: {
 		PROGRESS_X: 40,

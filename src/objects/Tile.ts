@@ -21,7 +21,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 			params.frame
 		)
 		this.maxScale = 0.38
-		this.speed = 0.3
+		this.speed = 0.2
 		this.scale = this.maxScale
 		this.matchCount = 1
 		this.isVisited = false
@@ -246,7 +246,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 			})
 		}
 	}
-	public destroyTile(isProcess = false): void {
+	public destroyTile(): void {
 		if (!this.scene) return
 		this.destroyEffect.explode(16)
 		this.destroyEffect.setPosition(this.x, this.y)

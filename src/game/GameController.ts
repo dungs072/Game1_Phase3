@@ -406,9 +406,7 @@ class GameController {
 				if (!tempTile) continue
 				if (tempTile.hasSameChildTypeTile(tile.getChildTexture())) {
 					if (tempTile.getMatchCount() == 4) {
-						this.handleBoomMatchFour(tempTile, () => {
-							this.resetAndFillTile()
-						})
+						this.handleBoomMatchFour(tempTile)
 					} else {
 						tempTile.destroyTile()
 						this.tileGrid[y][x] = undefined
@@ -420,32 +418,35 @@ class GameController {
 		this.tileGrid[boomTile.getCoordinateY()][boomTile.getCoordinateX()] = undefined
 		this.resetAndFillTile()
 	}
-	private wait(duration: number): Promise<void> {
-		return new Promise((resolve) => {
-			this.scene.time.delayedCall(duration, () => {
-				resolve()
-			})
-		})
-	}
-	private async processHorizontalTiles(xCoordinate: number, yCoordinate: number): Promise<void> {
+
+	private processHorizontalTiles(xCoordinate: number, yCoordinate: number): void {
 		const tempTile = this.tileGrid[yCoordinate][xCoordinate]
 		tempTile?.destroyTile()
 		let i = xCoordinate - 1
 		let j = xCoordinate + 1
 		let countTime = 1
 		while (i >= 0 || j < CONST.gridWidth) {
-			await this.wait(CONST.MATCH.DELAYTIME * countTime)
+			this.scene.time.delayedCall(
+				CONST.MATCH.DELAYTIME * countTime,
+				(i: number, j: number) => {
+					this.processTile(i, yCoordinate)
+					this.processTile(j, yCoordinate)
+				},
+				[i, j]
+			)
 			countTime++
-			this.processTile(i, yCoordinate)
-			this.processTile(j, yCoordinate)
 			i--
 			j++
 		}
-		for (let i = 0; i < CONST.gridWidth; i++) {
-			this.tileGrid[yCoordinate][i] = undefined
-		}
+		this.scene.time.delayedCall(CONST.MATCH.DELAYTIME * countTime, () => {
+			for (let i = 0; i < CONST.gridWidth; i++) {
+				this.tileGrid[yCoordinate][i] = undefined
+			}
+			this.matchesManager.addProcessing(false)
+			GameController.eventEmitter.emit('resettile')
+		})
 	}
-	private async processVerticalTiles(xCoordinate: number, yCoordinate: number): Promise<void> {
+	private processVerticalTiles(xCoordinate: number, yCoordinate: number): void {
 		const tempTile = this.tileGrid[yCoordinate][xCoordinate]
 		tempTile?.destroyTile()
 
@@ -453,16 +454,25 @@ class GameController {
 		let j = yCoordinate + 1
 		let countTime = 1
 		while (i >= 0 || j < CONST.gridHeight) {
-			await this.wait(CONST.MATCH.DELAYTIME * countTime)
+			this.scene.time.delayedCall(
+				CONST.MATCH.DELAYTIME * countTime,
+				(i: number, j: number) => {
+					this.processTile(xCoordinate, i)
+					this.processTile(xCoordinate, j)
+				},
+				[i, j]
+			)
 			countTime++
-			this.processTile(xCoordinate, i)
-			this.processTile(xCoordinate, j)
 			i--
 			j++
 		}
-		for (let i = 0; i < CONST.gridHeight; i++) {
-			this.tileGrid[i][xCoordinate] = undefined
-		}
+		this.scene.time.delayedCall(CONST.MATCH.DELAYTIME * countTime, () => {
+			for (let i = 0; i < CONST.gridHeight; i++) {
+				this.tileGrid[i][xCoordinate] = undefined
+			}
+			this.matchesManager.addProcessing(false)
+			GameController.eventEmitter.emit('resettile')
+		})
 	}
 	private processTile(xCoordinate: number, yCoordinate: number): void {
 		if (
@@ -475,24 +485,17 @@ class GameController {
 		const tempTile = this.tileGrid[yCoordinate][xCoordinate]
 		tempTile?.destroyTile()
 	}
-	private handleBoomMatchFour(tile: Tile, callback: Function): void {
-		this.matchesManager.setIsProcess(true)
+	private handleBoomMatchFour(tile: Tile): void {
+		this.matchesManager.addProcessing(true)
 		if (tile.getHorizontal()) {
 			const yCoordinate = tile.getCoordinateY()
 			const xCoordinate = tile.getCoordinateX()
-
-			this.processHorizontalTiles(xCoordinate, yCoordinate).then(() => {
-				this.matchesManager.setIsProcess(false)
-				callback()
-			})
+			this.processHorizontalTiles(xCoordinate, yCoordinate)
 			ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, CONST.gridWidth)
 		} else {
 			const yCoordinate = tile.getCoordinateY()
 			const xCoordinate = tile.getCoordinateX()
-			this.processVerticalTiles(xCoordinate, yCoordinate).then(() => {
-				this.matchesManager.setIsProcess(false)
-				callback()
-			})
+			this.processVerticalTiles(xCoordinate, yCoordinate)
 			ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, CONST.gridHeight)
 		}
 	}
@@ -598,7 +601,7 @@ class GameController {
 		this.secondSelectedTile = undefined
 	}
 
-	private async removeTileGroup(matches: Tile[][]): Promise<void> {
+	private removeTileGroup(matches: Tile[][]): void {
 		if (this.matchesManager.getIsProcess()) return
 		if (!this.tileGrid) return
 
@@ -617,10 +620,6 @@ class GameController {
 				this.checkMatches()
 			}
 		)
-	}
-	private destroyTile(tile: Tile): void {
-		this.tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
-		tile.destroyTile()
 	}
 
 	private getMatches(tileGrid: (Tile | undefined)[][]): Tile[][] {

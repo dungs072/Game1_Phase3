@@ -13,6 +13,7 @@ class RibbonParticle extends Phaser.GameObjects.Particles.Particle {
 		processors: Phaser.GameObjects.Particles.ParticleProcessor[]
 	): boolean {
 		const result = super.update(delta, step, processors)
+
 		return result
 	}
 
