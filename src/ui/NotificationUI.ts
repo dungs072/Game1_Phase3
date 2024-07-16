@@ -138,7 +138,7 @@ class NotificationUI extends Phaser.GameObjects.Container {
 
 	private setUpLeftFireWork(): void {
 		const config: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig = {
-			lifespan: 1500,
+			lifespan: 2000,
 			speed: { min: 200, max: 250 },
 			angle: { min: 260, max: 320 },
 			gravityY: 400,

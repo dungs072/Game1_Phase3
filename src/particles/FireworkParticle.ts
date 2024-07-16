@@ -41,7 +41,7 @@ class FireworkParticle extends Phaser.GameObjects.Particles.Particle {
 			this.velocityX = 0
 			this.x += Math.sin(this.swayPhase) * this.swayAmplitude * deltaTime
 			this.angle += 150 * deltaTime
-			this.alpha = Math.max(this.alpha - 0.7 * deltaTime, 0)
+			this.alpha = Math.max(this.alpha - 0.5 * deltaTime, 0)
 		} else {
 			this.angle += 50 * deltaTime
 		}

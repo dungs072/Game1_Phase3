@@ -56,9 +56,9 @@ class MatchList {
 				}
 			}
 		} else {
-			//this.matchManager.addProcessing(true)
 			for (let i = this.tiles.length - 1; i >= 0; i--) {
 				const tile = this.tiles[i]
+				if (tile == undefined) continue
 				if (tile.getMatchCount() >= 5) {
 					this.handleBoomMatchFive(tileGrid)
 				} else {
@@ -66,12 +66,14 @@ class MatchList {
 					tile.destroyTile()
 				}
 			}
-			// this.scene.time.delayedCall(CONST.MATCH.DELAYTIMEFILL, () => {
-			// 	this.matchManager.addProcessing(false)
-			// 	callback()
-			// })
 		}
+		// this.matchManager.addProcessing(true)
+		// this.scene.time.delayedCall(200, () => {
+		// 	this.matchManager.addProcessing(false)
+		// 	callback()
+		// })
 	}
+
 	private processHorizontalTiles(
 		xCoordinate: number,
 		yCoordinate: number,
@@ -116,7 +118,6 @@ class MatchList {
 			this.timedEvent = this.scene.time.delayedCall(
 				CONST.MATCH.DELAYTIME * countTime,
 				(i: number, j: number) => {
-					console.log(i, j)
 					this.processTile(xCoordinate, i)
 					this.processTile(xCoordinate, j)
 				},
@@ -227,8 +228,9 @@ class MatchList {
 
 		for (let i = 0; i < this.tiles.length; i++) {
 			if (this.tiles[i].getMatchCount() == 4) {
-				this.handleBoomMatchFour(this.tiles[i], tileGrid, anotherCallback)
+				this.matchManager.addProcessing(true)
 				this.destroyAllTilesExcept(this.tiles[i], tileGrid)
+				this.handleBoomMatchFour(this.tiles[i], tileGrid, anotherCallback)
 				return 0
 			} else if (this.tiles[i].getMatchCount() >= 5) {
 				this.destroyAllTilesExcept(this.tiles[i], tileGrid)
@@ -327,53 +329,10 @@ class MatchList {
 		}
 		return centerTile
 	}
-	private findCenter2(tileGrid: (Tile | undefined)[][], targetTile: Tile[]): Tile {
-		let count = 0
-		let maxCount = 0
-		let centerTile = targetTile[0]
-		for (let i = 0; i < targetTile.length; i++) {
-			const tile = targetTile[i]
-			const right = tile.getCoordinateX() + 1
-			const left = tile.getCoordinateX() - 1
-			const up = tile.getCoordinateY() - 1
-			const down = tile.getCoordinateY() + 1
-			if (right < CONST.gridWidth) {
-				const nextTile = tileGrid[tile.getCoordinateY()][right]
-				if (targetTile.includes(nextTile!)) {
-					count++
-				}
-			}
-			if (left >= 0) {
-				const nextTile = tileGrid[tile.getCoordinateY()][left]
-				if (targetTile.includes(nextTile!)) {
-					count++
-				}
-			}
-			if (down < CONST.gridHeight) {
-				const nextTile = tileGrid[down][tile.getCoordinateX()]
-				if (targetTile.includes(nextTile!)) {
-					count++
-				}
-			}
-			if (up >= 0) {
-				const nextTile = tileGrid[up][tile.getCoordinateX()]
-				if (targetTile.includes(nextTile!)) {
-					count++
-				}
-			}
-
-			if (count > maxCount) {
-				maxCount = count
-				centerTile = tile
-			}
-			count = 0
-		}
-		return centerTile
-	}
 	private destroyAllTilesExcept(tile: Tile, tileGrid: (Tile | undefined)[][]): void {
 		this.tiles.forEach((tempTile) => {
-			if (tempTile != tile) {
-				//tileGrid[tempTile.getCoordinateY()][tempTile.getCoordinateX()] = undefined
+			if (tempTile != tile && tile) {
+				tileGrid[tempTile.getCoordinateY()][tempTile.getCoordinateX()] = undefined
 				tempTile.destroyTile()
 			}
 		})

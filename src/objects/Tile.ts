@@ -1,4 +1,5 @@
 import CONST from '../const/const'
+import GameController from '../game/GameController'
 import { ImageConstructor } from '../interfaces/image.interface'
 import Utils from '../utils/Utils'
 
@@ -21,7 +22,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 			params.frame
 		)
 		this.maxScale = 0.38
-		this.speed = 0.2
+		this.speed = 0.4
 		this.scale = this.maxScale
 		this.matchCount = 1
 		this.isVisited = false
@@ -106,14 +107,15 @@ class Tile extends Phaser.GameObjects.Sprite {
 		xCoordinate: number,
 		yCoordinate: number,
 		callback: Function | undefined = undefined,
-		ease = 'Linear'
+		ease = 'Linear',
+		initialSpeed: number | undefined = undefined
 	): Phaser.Tweens.Tween | undefined {
 		if (!this.scene) return undefined
+		let speed = initialSpeed == undefined ? this.speed : initialSpeed
 		let duration =
-			Math.abs(yCoordinate * CONST.tileHeight + CONST.GAME.START_GRID_Y - this.y) / this.speed
+			Math.abs(yCoordinate * CONST.tileHeight + CONST.GAME.START_GRID_Y - this.y) / speed
 		if (this.getCoordinateY() == yCoordinate) {
-			duration =
-				Math.abs(xCoordinate * CONST.tileWidth + CONST.GAME.START_GRID_X - this.x) / this.speed
+			duration = Math.abs(xCoordinate * CONST.tileWidth + CONST.GAME.START_GRID_X - this.x) / speed
 		}
 		return this.scene.add.tween({
 			targets: this,

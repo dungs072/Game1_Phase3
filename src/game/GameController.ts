@@ -47,6 +47,10 @@ class GameController {
 		GameController.eventEmitter.on('resettile', () => {
 			this.resetAndFillTile()
 		})
+		GameController.eventEmitter.on('resetelement', (x: number, y: number) => {
+			console.log(x, y)
+			this.tileGrid[y][x] = undefined
+		})
 	}
 	private initUI(): void {
 		this.gameUI = new MainGameUI(this.scene)
@@ -170,6 +174,7 @@ class GameController {
 	private initGame(): void {
 		// Init variables
 		this.resetAllIdleAndHint()
+		this.matchesManager.resetProcessingList()
 		this.canMove = true
 		this.hasNextLevel = false
 		this.shuffle = new Shuffle(this.scene)
@@ -194,19 +199,14 @@ class GameController {
 			this.canMove = false
 			for (let y = 0; y < CONST.gridHeight; y++) {
 				for (let x = 0; x < CONST.gridWidth; x++) {
-					this.tileGrid[y][x]?.moveToTarget(
-						x,
-						y,
-						() => {
-							this.countTile--
-							if (this.countTile == 0) {
-								this.checkMatches()
-							} else {
-								this.resetAllIdleAndHint()
-							}
-						},
-						'EaseInOutElastic'
-					)
+					this.tileGrid[y][x]?.moveToTarget(x, y, () => {
+						this.countTile--
+						if (this.countTile == 0) {
+							this.checkMatches()
+						} else {
+							this.resetAllIdleAndHint()
+						}
+					})
 				}
 			}
 		})
@@ -248,14 +248,14 @@ class GameController {
 	private clearTweens(): void {
 		for (let y = 0; y < CONST.gridHeight; y++) {
 			for (let x = 0; x < CONST.gridWidth; x++) {
-				this.scene.tweens.killTweensOf(this.tileGrid[y][x]!)
-				this.tileGrid[y][x]?.resetTile()
+				//this.scene.tweens.killTweensOf(this.tileGrid[y][x]!)
+				//this.tileGrid[y][x]?.resetTile()
 			}
 		}
 	}
 	private stopIdleAndHint(): void {
 		this.resetAllIdleAndHint()
-		this.clearTweens()
+		//this.clearTweens()
 		this.canMove = true
 	}
 
@@ -334,8 +334,8 @@ class GameController {
 	private swapTiles(): void {
 		if (this.firstSelectedTile && this.secondSelectedTile) {
 			this.canMove = false
-			this.scene.tweens.killTweensOf(this.firstSelectedTile)
-			this.scene.tweens.killTweensOf(this.secondSelectedTile)
+			// this.scene.tweens.killTweensOf(this.firstSelectedTile)
+			// this.scene.tweens.killTweensOf(this.secondSelectedTile)
 			this.firstSelectedTile.resetTile()
 			// Get the position of the two tiles
 			const firstTilePosition = {
@@ -405,12 +405,14 @@ class GameController {
 				const tempTile = this.tileGrid[y][x]
 				if (!tempTile) continue
 				if (tempTile.hasSameChildTypeTile(tile.getChildTexture())) {
-					if (tempTile.getMatchCount() == 4) {
-						this.handleBoomMatchFour(tempTile)
-					} else {
-						tempTile.destroyTile()
-						this.tileGrid[y][x] = undefined
-					}
+					// if (tempTile.getMatchCount() == 4) {
+					// 	this.handleBoomMatchFour(tempTile)
+					// } else {
+					// 	tempTile.destroyTile()
+					// 	this.tileGrid[y][x] = undefined
+					// }
+					tempTile.destroyTile()
+					this.tileGrid[y][x] = undefined
 				}
 			}
 		}
@@ -521,78 +523,81 @@ class GameController {
 	private resetAndFillTile(): void {
 		// Loop through each column starting from the left
 		// map: x, tile bottom, blank tile
+		console.log(this.matchesManager.getLengthProcess())
 		if (this.matchesManager.getIsProcess()) return
-		let coordinates = new Map<number, number[]>()
-		let count = 0
-		for (let y = 0; y < this.tileGrid.length; y++) {
-			for (let x = 0; x < this.tileGrid[y].length; x++) {
-				if (this.tileGrid[y][x] == undefined || this.tileGrid[y][x] == null) {
-					count++
-					if (coordinates.has(x)) {
-						const tempList = coordinates.get(x)
-						if (tempList) {
-							tempList[1] = y
-						}
-					} else {
-						const tempList: number[] = [-1, y]
-						coordinates.set(x, tempList)
-					}
+		console.log(this.tileGrid)
+		let isFilled = false
+		for (let x = 0; x < CONST.gridWidth; x++) {
+			let i = CONST.gridHeight - 1
+			let j = CONST.gridHeight - 1
+			while (i >= 0 && j >= 0) {
+				const tileI = this.tileGrid[i][x]
+				const tileJ = this.tileGrid[j][x]
+				if (tileI) {
+					i--
+					j--
 				}
-
-				if (
-					y + 1 < this.tileGrid.length &&
-					(this.tileGrid[y + 1][x] == undefined || this.tileGrid[y + 1][x] == null) &&
-					this.tileGrid[y][x] != undefined
-				) {
-					if (coordinates.has(x)) {
-						const tempList = coordinates.get(x)
-						if (tempList) {
-							tempList[0] = y
-						}
-					} else {
-						const tempList: number[] = [y, -1]
-						coordinates.set(x, tempList)
-					}
+				if (tileJ == undefined || tileJ == null) {
+					j--
+				}
+				if ((tileI == undefined || tileI == null) && tileJ) {
+					this.matchesManager.addProcessing(true)
+					this.tileGrid[j][x] = undefined
+					this.tileGrid[i][x] = tileJ
+					tileJ.moveToTarget(
+						x,
+						i,
+						() => {
+							this.matchesManager.addProcessing(false)
+							if (!this.matchesManager.getIsProcess()) {
+								this.fillTiles()
+								isFilled = true
+							}
+						},
+						'Quad.out'
+					)
+					i--
+					j--
 				}
 			}
 		}
-		if (coordinates.size == 0) {
-			this.canMove = true
-		} else {
-			coordinates.forEach((values: number[], key: number) => {
-				let j = values[1]
-				for (let i = values[0]; i >= 0; i--) {
-					if (this.tileGrid[i][key] == undefined) continue
-
-					this.tileGrid[i][key]?.moveToTargetBackout(key, j, undefined, 'back.out')
-					let tempTile = this.tileGrid[i][key]
-					this.tileGrid[i][key] = this.tileGrid[j][key]
-					this.tileGrid[j][key] = tempTile
-
-					j--
-				}
-				for (let i = j; i >= 0; i--) {
-					const yCoordinate = i - j - 1
-					const tile = this.addTile(key, yCoordinate)
-
-					tile.moveToTargetBackout(
-						key,
-						i,
+		if (!isFilled) {
+			this.fillTiles()
+		}
+	}
+	private fillTiles(): void {
+		if (this.matchesManager.getIsProcess()) return
+		for (let x = 0; x < CONST.gridWidth; x++) {
+			let maxY = -1
+			for (let y = CONST.gridHeight - 1; y >= 0; y--) {
+				const currenTile = this.tileGrid[y][x]
+				if (currenTile == undefined || currenTile == null) {
+					if (maxY < y) {
+						maxY = y
+					}
+					const yCoordinate = y - maxY - 1
+					const tile = this.addTile(x, yCoordinate)
+					this.matchesManager.addProcessing(true)
+					this.tileGrid[y][x] = tile
+					tile.moveToTarget(
+						x,
+						y,
 						() => {
 							if (this.hasNextLevel) {
+								this.matchesManager.resetProcessingList()
 								tile.destroyTile()
 								return
 							}
-							this.tileGrid[i][key] = tile
-							count--
-							if (count == 0) {
+
+							this.matchesManager.addProcessing(false)
+							if (!this.matchesManager.getIsProcess()) {
 								this.checkMatches()
 							}
 						},
-						'back.out'
+						'Quad.out'
 					)
 				}
-			})
+			}
 		}
 	}
 

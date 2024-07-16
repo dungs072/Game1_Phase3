@@ -430,7 +430,9 @@ class MatchesManager {
 		for (let i = this.matchLists.length - 1; i >= 0; i--) {
 			const matchList = this.matchLists[i].getTiles()
 			if (matchList.length == 3) {
-				this.matchLists[i].destroyAllTiles(tileGrid, callback)
+				if (this.matchLists[i] != undefined) {
+					this.matchLists[i]?.destroyAllTiles(tileGrid, callback)
+				}
 			} else if (matchList.length > 3) {
 				count += this.matchLists[i].mergeTiles(
 					tileGrid,
@@ -438,7 +440,6 @@ class MatchesManager {
 					yMergeCoordinate,
 					() => {
 						count--
-
 						if (count == 0) {
 							if (callback) {
 								callback()
@@ -461,6 +462,9 @@ class MatchesManager {
 		if (!this.matchLists) return
 		this.matchLists.splice(0, this.matchLists.length)
 		//this.processingList.splice(0, this.processingList.length)
+	}
+	public resetProcessingList() {
+		this.processingList.splice(0, this.processingList.length)
 	}
 	public setTileGrid(tileGrid: (Tile | undefined)[][]) {
 		this.tileGrid = tileGrid
