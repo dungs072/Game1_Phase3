@@ -23,7 +23,7 @@ let CONST = {
 		HOVER_SCALE: 0.45,
 	},
 	MATCH: {
-		SIZE_BOOM: 2,
+		SIZE_BOOM: 1,
 		DELAYTIME: 150,
 		DELAYTIMEFILL: 200,
 	},

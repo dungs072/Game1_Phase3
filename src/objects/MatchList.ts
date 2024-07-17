@@ -4,6 +4,7 @@ import ScoreManager from '../score/ScoreManager'
 import Tile from './Tile'
 import MatchesManager from './MatchesManager'
 import GameController from '../game/GameController'
+import TileType from '../types/tileType.d'
 
 class MatchList {
 	private tiles: Tile[]
@@ -43,35 +44,30 @@ class MatchList {
 				this.matchManager.addProcessing(true)
 				this.handleBoomMatchFour(tile, tileGrid, callback)
 			}
+			if (tile.getMatchCount() >= 5 && tile.getTileType() == TileType.PACKAGE_COLOR) {
+				console.log('destroy all tiles')
+				this.matchManager.addProcessing(true)
+				this.handleBoomMatchFive(tileGrid, tile, callback)
+			}
 		}
 		if (this.matchManager.getIsProcess()) {
 			for (let i = this.tiles.length - 1; i >= 0; i--) {
 				const tile = this.tiles[i]
 				if (tile == undefined) continue
-				if (tile.getMatchCount() >= 5) {
-					this.handleBoomMatchFive(tileGrid)
-				} else {
-					tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
-					tile.destroyTile()
+				if (tile.getMatchCount() >= 5 && tile.getTileType() == TileType.PACKAGE_COLOR) {
+					continue
 				}
+				tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
+				tile.destroyTile()
 			}
 		} else {
 			for (let i = this.tiles.length - 1; i >= 0; i--) {
 				const tile = this.tiles[i]
 				if (tile == undefined) continue
-				if (tile.getMatchCount() >= 5) {
-					this.handleBoomMatchFive(tileGrid)
-				} else {
-					tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
-					tile.destroyTile()
-				}
+				tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
+				tile.destroyTile()
 			}
 		}
-		// this.matchManager.addProcessing(true)
-		// this.scene.time.delayedCall(200, () => {
-		// 	this.matchManager.addProcessing(false)
-		// 	callback()
-		// })
 	}
 
 	private processHorizontalTiles(
@@ -173,7 +169,8 @@ class MatchList {
 	}
 	private handleBoomMatchFive(
 		tileGrid: (Tile | undefined)[][],
-		centerTile: Tile | undefined = undefined
+		centerTile: Tile | undefined = undefined,
+		callback: Function | undefined
 	): void {
 		const tile = centerTile == undefined ? this.findCenter(tileGrid, this.tiles) : centerTile
 		const left =
@@ -192,20 +189,78 @@ class MatchList {
 			tile.getCoordinateY() + CONST.MATCH.SIZE_BOOM < CONST.gridHeight
 				? tile.getCoordinateY() + CONST.MATCH.SIZE_BOOM
 				: CONST.gridHeight - 1
-
-		for (let i = up; i <= down; i++) {
-			for (let j = left; j <= right; j++) {
-				const tempTile = tileGrid[i][j]
-				if (!tempTile) {
-					continue
+		ScoreManager.Events.emit(
+			CONST.SCORE.ADD_SCORE_EVENT,
+			Math.abs(down - up) + 1 + Math.abs(right - left) + 1
+		)
+		if (tile.getTileType() == TileType.PACKAGE_COLOR) {
+			let tUp = tile.getCoordinateY()
+			let tDown = tile.getCoordinateY()
+			let tLeft = tile.getCoordinateX()
+			let tRight = tile.getCoordinateX()
+			let countTime = 0
+			while (tUp > up || tDown < down || tLeft > left || tRight < right) {
+				if (tUp > up) {
+					tUp--
 				}
-				tileGrid[i][j] = undefined
-				tempTile?.destroyTile()
+				if (tDown < down) {
+					tDown++
+				}
+				if (tLeft > left) {
+					tLeft--
+				}
+				if (tRight < right) {
+					tRight++
+				}
+
+				let i = tDown
+				let j = tLeft
+				let canBreak = false
+				while (!canBreak) {
+					const tempTile = this.tileGrid[i][j]
+					if (!tempTile) {
+						break
+					}
+
+					this.timedEvent = this.scene.time.delayedCall(
+						CONST.MATCH.DELAYTIME * countTime,
+						(i: number, j: number) => {
+							tileGrid[i][j] = undefined
+							tempTile?.destroyTile()
+						},
+						[i, j]
+					)
+					if (i == tDown && j < tRight) {
+						j++
+					} else if (j == tRight && i > tUp) {
+						i--
+					} else if (i == tUp && j > tLeft) {
+						j--
+					} else if (j == tLeft && i < tDown) {
+						i++
+						if (i == tDown) {
+							canBreak = true
+						}
+					}
+					countTime++
+				}
 			}
+			countTime++
+			this.scene.time.delayedCall(CONST.MATCH.DELAYTIME * countTime, () => {
+				this.matchManager.addProcessing(false)
+				for (let i = 0; i < this.tiles.length; i++) {
+					const tempTile = this.tiles[i]
+					if (!tempTile) continue
+					this.tileGrid[tempTile.getCoordinateY()][tempTile.getCoordinateX()] = undefined
+					tempTile.destroyTile()
+				}
+				if (callback) {
+					callback()
+				} else {
+					GameController.eventEmitter.emit('resettile')
+				}
+			})
 		}
-		ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, down - up + 1 + (right - left + 1))
-		tileGrid[tile.getCoordinateY()][tile.getCoordinateX()] = undefined
-		tile.destroyTile()
 	}
 
 	public mergeTiles(
@@ -233,8 +288,10 @@ class MatchList {
 				this.handleBoomMatchFour(this.tiles[i], tileGrid, anotherCallback)
 				return 0
 			} else if (this.tiles[i].getMatchCount() >= 5) {
-				this.destroyAllTilesExcept(this.tiles[i], tileGrid)
-				this.handleBoomMatchFive(tileGrid, this.tiles[i])
+				this.matchManager.addProcessing(true)
+				console.log('merge')
+				//this.destroyAllTilesExcept(this.tiles[i], tileGrid)
+				this.handleBoomMatchFive(tileGrid, this.tiles[i], undefined)
 
 				return 0
 			}
@@ -293,8 +350,12 @@ class MatchList {
 		})
 		if (centerTile.isColorBoom()) {
 			if (centerTile) {
-				centerTile.setTexture('colorboom')
-				centerTile.setChildrenTile('colorboom')
+				if (centerTile.getTileType() == TileType.PACKAGE_COLOR) {
+					centerTile.togglePackage(true)
+				} else {
+					centerTile.setTexture('colorboom')
+					centerTile.setChildrenTile('colorboom')
+				}
 			}
 		} else {
 			if (centerTile.getHorizontal()) {

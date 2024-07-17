@@ -1,6 +1,6 @@
 import CONST from '../const/const'
-import GameController from '../game/GameController'
 import { ImageConstructor } from '../interfaces/image.interface'
+import TileType from '../types/tileType.d'
 import Utils from '../utils/Utils'
 
 class Tile extends Phaser.GameObjects.Sprite {
@@ -13,6 +13,8 @@ class Tile extends Phaser.GameObjects.Sprite {
 	private maxScale: number
 	private childTexture: string
 	private highlightTween: Phaser.Tweens.Tween
+	private tileType: TileType
+	private package: Phaser.GameObjects.Sprite
 
 	constructor(params: ImageConstructor) {
 		super(
@@ -33,6 +35,27 @@ class Tile extends Phaser.GameObjects.Sprite {
 		this.initGlow()
 		this.setDepth(1)
 		this.scene.add.existing(this)
+
+		this.package = this.scene.add.sprite(this.x, this.y, 'package')
+		this.package.setOrigin(0.5, 0.5)
+		this.package.setDepth(2)
+		this.package.scale = 0.38
+		this.scene.add.existing(this.package)
+		this.togglePackage(false)
+		this.tileType = TileType.NONE
+	}
+	public togglePackage(state: boolean): void {
+		this.package.setVisible(state)
+		this.package.setActive(state)
+	}
+	public getPackage(): Phaser.GameObjects.Sprite {
+		return this.package
+	}
+	public setTileType(tileType: TileType): void {
+		this.tileType = tileType
+	}
+	public getTileType(): TileType {
+		return this.tileType
 	}
 	public setIsVisited(isVisited: boolean): void {
 		this.isVisited = isVisited
@@ -85,6 +108,10 @@ class Tile extends Phaser.GameObjects.Sprite {
 	public getCoordinateY(): number {
 		return Math.floor((this.y - CONST.GAME.START_GRID_Y) / CONST.tileHeight)
 	}
+	public updatePackPosition(): void {
+		this.package.x = this.x
+		this.package.y = this.y
+	}
 
 	private initAnimation(): void {
 		this.destroyEffect = this.scene.add.particles(400, 250, 'flares', {
@@ -118,8 +145,9 @@ class Tile extends Phaser.GameObjects.Sprite {
 		if (this.getCoordinateY() == yCoordinate) {
 			duration = Math.abs(xCoordinate * CONST.tileWidth + CONST.GAME.START_GRID_X - this.x) / speed
 		}
+		//	this.togglePackage(true)
 		return this.scene.add.tween({
-			targets: this,
+			targets: [this, this.package],
 			x: CONST.tileHeight * xCoordinate + CONST.GAME.START_GRID_X,
 			y: CONST.tileHeight * yCoordinate + CONST.GAME.START_GRID_Y,
 			ease: ease,
@@ -268,14 +296,17 @@ class Tile extends Phaser.GameObjects.Sprite {
 		if (!this.scene) return
 		this.destroyEffect.explode(16)
 		this.destroyEffect.setPosition(this.x, this.y)
+		this.package.play('packages')
 		this.scene.add.tween({
 			targets: this,
 			scale: 0.1,
 			ease: 'Linear',
-			duration: 300,
+			duration: 400,
 			repeat: 0,
 			yoyo: false,
+
 			onComplete: () => {
+				this.package.destroy()
 				this.destroy()
 			},
 		})

@@ -2,6 +2,7 @@ import { Scene } from 'phaser'
 import CONST from '../const/const'
 import MatchList from './MatchList'
 import Tile from './Tile'
+import TileType from '../types/tileType.d'
 
 class MatchesManager {
 	private matchLists: MatchList[]
@@ -93,6 +94,22 @@ class MatchesManager {
 
 			return null
 		} else {
+			let isAnchor = false
+			for (let i = 1; i < positions.length; i++) {
+				const position = positions[i]
+				const prePosition = positions[i - 1]
+				if (position.x != prePosition.x && position.y != prePosition.y) {
+					isAnchor = true
+					break
+				}
+			}
+			if (isAnchor) {
+				for (let i = 0; i < positions.length; i++) {
+					const position = positions[i]
+					this.tileGrid[position.y][position.x]?.setTileType(TileType.PACKAGE_COLOR)
+				}
+			}
+
 			return positions
 		}
 	}
@@ -272,6 +289,22 @@ class MatchesManager {
 
 			return null
 		} else {
+			let isAnchor = false
+			for (let i = 1; i < positions.length; i++) {
+				const position = positions[i]
+				const prePosition = positions[i - 1]
+				if (position.x != prePosition.x && position.y != prePosition.y) {
+					isAnchor = true
+					break
+				}
+			}
+			if (isAnchor) {
+				for (let i = 0; i < positions.length; i++) {
+					const position = positions[i]
+					this.tileGrid[position.y][position.x]?.setTileType(TileType.PACKAGE_COLOR)
+				}
+			}
+
 			return positions
 		}
 	}

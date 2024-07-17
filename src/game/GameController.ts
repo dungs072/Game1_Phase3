@@ -7,6 +7,7 @@ import MatchesManager from '../objects/MatchesManager'
 import MainGameUI from '../ui/MainGameUI'
 import ScoreManager from '../score/ScoreManager'
 import NotificationUI from '../ui/NotificationUI'
+import TileType from '../types/tileType.d'
 
 class GameController {
 	public static eventEmitter: Phaser.Events.EventEmitter = new Phaser.Events.EventEmitter()
@@ -176,6 +177,7 @@ class GameController {
 		this.resetAllIdleAndHint()
 		this.matchesManager.resetProcessingList()
 		this.matchesManager.clear()
+		this.scoreManager.setCurrentScore(0)
 		this.canMove = true
 		this.hasNextLevel = false
 		this.shuffle = new Shuffle(this.scene)
@@ -255,8 +257,6 @@ class GameController {
 			for (let x = 0; x < this.hintTileGrid[y].length; x++) {
 				const tile = this.hintTileGrid[y][x]
 				tile.clearHighlightTween()
-				//this.scene.tweens.killTweensOf(this.tileGrid[y][x]!)
-				//this.tileGrid[y][x]?.resetTile()
 			}
 		}
 	}
@@ -341,8 +341,6 @@ class GameController {
 	private swapTiles(): void {
 		if (this.firstSelectedTile && this.secondSelectedTile) {
 			this.canMove = false
-			// this.scene.tweens.killTweensOf(this.firstSelectedTile)
-			// this.scene.tweens.killTweensOf(this.secondSelectedTile)
 			this.firstSelectedTile.resetTile()
 			// Get the position of the two tiles
 			const firstTilePosition = {
@@ -361,10 +359,9 @@ class GameController {
 			this.tileGrid[secondTilePosition.y / CONST.tileHeight][
 				secondTilePosition.x / CONST.tileWidth
 			] = this.firstSelectedTile
-
 			// Move them on the screen with tweens
 			this.scene.add.tween({
-				targets: this.firstSelectedTile,
+				targets: [this.firstSelectedTile, this.firstSelectedTile.getPackage()],
 				x: this.secondSelectedTile.x,
 				y: this.secondSelectedTile.y,
 				ease: 'Linear',
@@ -377,7 +374,7 @@ class GameController {
 			})
 
 			this.scene.add.tween({
-				targets: this.secondSelectedTile,
+				targets: [this.secondSelectedTile, this.secondSelectedTile.getPackage()],
 				x: this.firstSelectedTile.x,
 				y: this.firstSelectedTile.y,
 				ease: 'Linear',
@@ -388,9 +385,15 @@ class GameController {
 					this.canMove = false
 				},
 				onComplete: () => {
-					if (this.firstSelectedTile?.isColorBoom()) {
+					if (
+						this.firstSelectedTile?.isColorBoom() &&
+						this.firstSelectedTile.getTileType() != TileType.PACKAGE_COLOR
+					) {
 						this.explodeSameTileInGrid(this.secondSelectedTile!, this.firstSelectedTile)
-					} else if (this.secondSelectedTile?.isColorBoom()) {
+					} else if (
+						this.secondSelectedTile?.isColorBoom() &&
+						this.secondSelectedTile.getTileType() != TileType.PACKAGE_COLOR
+					) {
 						this.explodeSameTileInGrid(this.firstSelectedTile!, this.secondSelectedTile)
 					} else {
 						this.checkMatches()
@@ -530,7 +533,7 @@ class GameController {
 	private resetAndFillTile(): void {
 		// Loop through each column starting from the left
 		// map: x, tile bottom, blank tile
-		// console.log(this.matchesManager.getLengthProcess())
+
 		if (this.matchesManager.getIsProcess()) return
 		let isFilled = false
 		for (let x = 0; x < CONST.gridWidth; x++) {

@@ -62,8 +62,19 @@ class BootScene extends Phaser.Scene {
 		this.load.image('character', 'assets/ui/main/character_info.png')
 		this.load.image('star02', 'assets/ui/main/star_02.png')
 		this.load.image('good', 'assets/ui/main/text_2.png')
+		this.load.image('package', 'assets/images3/packageBoom.png')
+		this.load.image('package1', 'assets/anims/pack1.png')
+		this.load.image('package2', 'assets/anims/pack2.png')
+		this.load.image('package3', 'assets/anims/pack3.png')
 	}
-	create() {}
+	create() {
+		this.anims.create({
+			key: 'packages',
+			frames: [{ key: 'package1' }, { key: 'package2' }, { key: 'package3', duration: 50 }],
+			frameRate: 8,
+			repeat: 0,
+		})
+	}
 
 	update(): void {
 		this.scene.start('GameScene')
