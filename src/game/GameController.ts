@@ -48,7 +48,6 @@ class GameController {
 			this.resetAndFillTile()
 		})
 		GameController.eventEmitter.on('resetelement', (x: number, y: number) => {
-			console.log(x, y)
 			this.tileGrid[y][x] = undefined
 		})
 	}
@@ -175,6 +174,7 @@ class GameController {
 		// Init variables
 		this.resetAllIdleAndHint()
 		this.matchesManager.resetProcessingList()
+		this.matchesManager.clear()
 		this.canMove = true
 		this.hasNextLevel = false
 		this.shuffle = new Shuffle(this.scene)
@@ -221,16 +221,16 @@ class GameController {
 		this.secondSelectedTile = undefined
 	}
 	public update(deltaTime: number): void {
-		this.maxTimeToTriggerIdle -= deltaTime
-		if (this.maxTimeToTriggerIdle <= 0) {
-			this.triggerIdleTiles()
-			this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
-		}
-		this.maxTimeToTriggerHint -= deltaTime
-		if (this.maxTimeToTriggerHint <= 0) {
-			this.triggerHint()
-			this.maxTimeToTriggerHint = CONST.GAME.MAX_TIME_TRIGGER_HINT
-		}
+		// this.maxTimeToTriggerIdle -= deltaTime
+		// if (this.maxTimeToTriggerIdle <= 0) {
+		// 	this.triggerIdleTiles()
+		// 	this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
+		// }
+		// this.maxTimeToTriggerHint -= deltaTime
+		// if (this.maxTimeToTriggerHint <= 0) {
+		// 	this.triggerHint()
+		// 	this.maxTimeToTriggerHint = CONST.GAME.MAX_TIME_TRIGGER_HINT
+		// }
 	}
 	private triggerIdleTiles(): void {
 		let i = 0
