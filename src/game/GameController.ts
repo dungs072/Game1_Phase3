@@ -1,4 +1,4 @@
-import { Scene, Time } from 'phaser'
+import { Scene } from 'phaser'
 import Tile from '../objects/Tile'
 import CONST from '../const/const'
 import Shuffle from './Shuffle'
@@ -25,6 +25,7 @@ class GameController {
 
 	// Grid with tiles
 	private tileGrid: (Tile | undefined)[][] = []
+	private hintTileGrid: Tile[][]
 
 	private matchesManager: MatchesManager
 
@@ -221,16 +222,19 @@ class GameController {
 		this.secondSelectedTile = undefined
 	}
 	public update(deltaTime: number): void {
-		// this.maxTimeToTriggerIdle -= deltaTime
-		// if (this.maxTimeToTriggerIdle <= 0) {
-		// 	this.triggerIdleTiles()
-		// 	this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
-		// }
-		// this.maxTimeToTriggerHint -= deltaTime
-		// if (this.maxTimeToTriggerHint <= 0) {
-		// 	this.triggerHint()
-		// 	this.maxTimeToTriggerHint = CONST.GAME.MAX_TIME_TRIGGER_HINT
-		// }
+		if (!this.canMove) {
+			this.resetAllIdleAndHint()
+		}
+		this.maxTimeToTriggerIdle -= deltaTime
+		if (this.maxTimeToTriggerIdle <= 0) {
+			this.triggerIdleTiles()
+			this.maxTimeToTriggerIdle = CONST.GAME.MAX_TIME_TRIGGER_IDLE
+		}
+		this.maxTimeToTriggerHint -= deltaTime
+		if (this.maxTimeToTriggerHint <= 0) {
+			this.triggerHint()
+			this.maxTimeToTriggerHint = CONST.GAME.MAX_TIME_TRIGGER_HINT
+		}
 	}
 	private triggerIdleTiles(): void {
 		let i = 0
@@ -245,9 +249,12 @@ class GameController {
 			}
 		}
 	}
-	private clearTweens(): void {
-		for (let y = 0; y < CONST.gridHeight; y++) {
-			for (let x = 0; x < CONST.gridWidth; x++) {
+	private clearHighLightTweens(): void {
+		if (!this.hintTileGrid) return
+		for (let y = 0; y < this.hintTileGrid.length; y++) {
+			for (let x = 0; x < this.hintTileGrid[y].length; x++) {
+				const tile = this.hintTileGrid[y][x]
+				tile.clearHighlightTween()
 				//this.scene.tweens.killTweensOf(this.tileGrid[y][x]!)
 				//this.tileGrid[y][x]?.resetTile()
 			}
@@ -255,7 +262,7 @@ class GameController {
 	}
 	private stopIdleAndHint(): void {
 		this.resetAllIdleAndHint()
-		//this.clearTweens()
+		this.clearHighLightTweens()
 		this.canMove = true
 	}
 
@@ -523,9 +530,8 @@ class GameController {
 	private resetAndFillTile(): void {
 		// Loop through each column starting from the left
 		// map: x, tile bottom, blank tile
-		console.log(this.matchesManager.getLengthProcess())
+		// console.log(this.matchesManager.getLengthProcess())
 		if (this.matchesManager.getIsProcess()) return
-		console.log(this.tileGrid)
 		let isFilled = false
 		for (let x = 0; x < CONST.gridWidth; x++) {
 			let i = CONST.gridHeight - 1
@@ -739,13 +745,13 @@ class GameController {
 	}
 
 	private triggerHint(): void {
-		const matches = this.getHint()
-		if (matches.length > 0) {
-			for (let y = 0; y < matches.length; y++) {
-				for (let x = 0; x < matches[y].length; x++) {
-					const tile = matches[y][x]
+		this.hintTileGrid = this.getHint()
+		if (this.hintTileGrid.length > 0) {
+			for (let y = 0; y < this.hintTileGrid.length; y++) {
+				for (let x = 0; x < this.hintTileGrid[y].length; x++) {
+					const tile = this.hintTileGrid[y][x]
 					if (!tile) continue
-					tile.shakeTile()
+					tile.highlightTile()
 				}
 			}
 		} else {

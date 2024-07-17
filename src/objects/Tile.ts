@@ -12,6 +12,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 	private isVisited: boolean
 	private maxScale: number
 	private childTexture: string
+	private highlightTween: Phaser.Tweens.Tween
 
 	constructor(params: ImageConstructor) {
 		super(
@@ -202,19 +203,33 @@ class Tile extends Phaser.GameObjects.Sprite {
 			yoyo: true,
 		})
 	}
-	public shakeTile(): void {
+	public highlightTile(): void {
 		if (!this.scene) return
-		this.scene.tweens.add({
+		if (this.highlightTween && this.highlightTween.isPlaying()) {
+			return
+		}
+		this.highlightTween = this.scene.tweens.add({
 			targets: this,
-			x: this.x + CONST.TILE.SHAKE_INTENSITY,
-			y: this.y + CONST.TILE.SHAKE_INTENSITY,
-			duration: 50,
+			alpha: { from: 0.9, to: 1 },
+			scaleX: { from: 0.25, to: this.maxScale },
+			scaleY: { from: 0.25, to: this.maxScale },
 			yoyo: true,
-			repeat: 5,
+			repeat: -1,
+			duration: 500,
+			ease: 'Power1',
 		})
+	}
+	public clearHighlightTween(): void {
+		if (!this.highlightTween) return
+		this.highlightTween.stop()
+		this.resetTile()
+	}
+	public isHighlightTweenRunning(): boolean {
+		return this.highlightTween && this.highlightTween.isPlaying()
 	}
 	public hoverIn(): void {
 		if (!this.scene) return
+		if (this.isHighlightTweenRunning()) return
 		this.scene.tweens.add({
 			targets: this,
 			scale: CONST.TILE.HOVER_SCALE,
@@ -227,6 +242,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 		if (!this.scene) {
 			return
 		}
+		if (this.isHighlightTweenRunning()) return
 		this.scene.tweens.add({
 			targets: this,
 			scale: this.maxScale,
@@ -267,6 +283,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 	public resetTile(): void {
 		this.angle = 0
 		this.scale = this.maxScale
+		this.alpha = 1
 	}
 	public isColorBoom(): boolean {
 		return this.matchCount >= 5
