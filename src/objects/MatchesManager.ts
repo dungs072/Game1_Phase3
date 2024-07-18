@@ -53,6 +53,8 @@ class MatchesManager {
 		if (this.isMatch(row, col, tile)) {
 			positions.push({ y: row, x: col })
 			tile.setIsVisited(true)
+			let count = positions.length
+			let singlePositionIndex = -1
 			// Check upwards
 			let i = 1
 			while (this.isMatch(row - i, col, tile)) {
@@ -69,7 +71,12 @@ class MatchesManager {
 				i++
 			}
 
+			if (positions.length - count == 1) {
+				singlePositionIndex = positions.length - 1
+			}
+
 			// Check leftwards
+			count = positions.length
 			i = 1
 			while (this.isMatch(row, col - i, tile)) {
 				positions.push({ y: row, x: col - i })
@@ -83,6 +90,12 @@ class MatchesManager {
 				positions.push({ y: row, x: col + i })
 				this.tileGrid[row][col + i]?.setIsVisited(true)
 				i++
+			}
+			if (positions.length - count == 1) {
+				singlePositionIndex = positions.length - 1
+			}
+			if (singlePositionIndex < 0 && positions.length >= 5) {
+				positions.slice(singlePositionIndex, 1)
 			}
 		}
 
@@ -194,6 +207,7 @@ class MatchesManager {
 			positions.push({ y: row, x: col })
 			tile.setIsVisited(true)
 			// Check vertical + horizontal arms (upward + leftward)
+			let count = positions.length
 			let i = 1
 			while (this.isMatch(row - i, col, tile)) {
 				positions.push({ y: row - i, x: col })
@@ -214,9 +228,17 @@ class MatchesManager {
 				const pos = positions.splice(positions.length - 1, 1)
 				this.tileGrid[pos[0].y][pos[0].x]?.setIsVisited(false)
 			}
+			if (positions.length - count < 5) {
+				for (let j = positions.length - 1; j >= count; j--) {
+					const position = positions[j]
+					this.tileGrid[position.y][position.x]?.setIsVisited(false)
+					positions.splice(j, 1)
+				}
+			}
 
 			// Check vertical + horizontal arms (upward + rightward)
 			i = 1
+			count = positions.length
 			while (this.isMatch(row - i, col, tile)) {
 				positions.push({ y: row - i, x: col })
 				this.tileGrid[row - i][col]?.setIsVisited(true)
@@ -236,9 +258,17 @@ class MatchesManager {
 				const pos = positions.splice(positions.length - 1, 1)
 				this.tileGrid[pos[0].y][pos[0].x]?.setIsVisited(false)
 			}
+			if (positions.length - count < 5) {
+				for (let j = positions.length - 1; j >= count; j--) {
+					const position = positions[j]
+					this.tileGrid[position.y][position.x]?.setIsVisited(false)
+					positions.splice(j, 1)
+				}
+			}
 
 			// Check vertical + horizontal arms (downward + leftward)
 			i = 1
+			count = positions.length
 			while (this.isMatch(row + i, col, tile)) {
 				positions.push({ y: row + i, x: col })
 				this.tileGrid[row + i][col]?.setIsVisited(true)
@@ -258,9 +288,17 @@ class MatchesManager {
 				const pos = positions.splice(positions.length - 1, 1)
 				this.tileGrid[pos[0].y][pos[0].x]?.setIsVisited(false)
 			}
+			if (positions.length - count < 5) {
+				for (let j = positions.length - 1; j >= count; j--) {
+					const position = positions[j]
+					this.tileGrid[position.y][position.x]?.setIsVisited(false)
+					positions.splice(j, 1)
+				}
+			}
 
 			// Check vertical + horizontal arms (downward + rightward)
 			i = 1
+			count = positions.length
 			while (this.isMatch(row + i, col, tile)) {
 				positions.push({ y: row + i, x: col })
 				this.tileGrid[row + i][col]?.setIsVisited(true)
@@ -279,6 +317,13 @@ class MatchesManager {
 			if (i == 2) {
 				const pos = positions.splice(positions.length - 1, 1)
 				this.tileGrid[pos[0].y][pos[0].x]?.setIsVisited(false)
+			}
+			if (positions.length - count < 5) {
+				for (let j = positions.length - 1; j >= count; j--) {
+					const position = positions[j]
+					this.tileGrid[position.y][position.x]?.setIsVisited(false)
+					positions.splice(j, 1)
+				}
 			}
 		}
 		if (positions.length < 5) {
@@ -338,7 +383,7 @@ class MatchesManager {
 					matchFound = this.checkLShape(tile)
 
 					if (matchFound != null) {
-						console.log('L shape')
+						//console.log('L shape')
 						this.addMatch(matchFound)
 						if (this.countTileLeft < 5) {
 							flag = true

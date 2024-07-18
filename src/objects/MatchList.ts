@@ -288,7 +288,6 @@ class MatchList {
 				return 0
 			} else if (this.tiles[i].getMatchCount() >= 5) {
 				this.matchManager.addProcessing(true)
-				console.log('merge')
 				//this.destroyAllTilesExcept(this.tiles[i], tileGrid)
 				this.handleBoomMatchFive(tileGrid, this.tiles[i], undefined)
 

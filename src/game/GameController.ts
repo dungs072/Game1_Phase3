@@ -528,7 +528,7 @@ class GameController {
 			this.tileUp()
 			this.canMove = true
 			this.isDragging = false
-			this.debugTiles()
+			//this.debugTiles()
 		}
 	}
 	private debugTiles(): void {
