@@ -200,6 +200,7 @@ class GameController {
 
 		this.shuffle.playShuffle(() => {
 			this.canMove = false
+			this.resetAllIdleAndHint()
 			for (let y = 0; y < CONST.gridHeight; y++) {
 				for (let x = 0; x < CONST.gridWidth; x++) {
 					this.tileGrid[y][x]?.moveToTarget(x, y, () => {
