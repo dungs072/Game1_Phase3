@@ -1,22 +1,21 @@
 class FireworkParticle extends Phaser.GameObjects.Particles.Particle {
 	private drag: number
-	private speed: number
-	private gravity: number
-	private rotationSpeed: number
 	private swayPhase: number
 	private swayFrequency: number
 	private swayAmplitude: number
-	private verticalSpeed: number
+	private maxVeY: number
+	private isDropped: boolean
+	private isDown: boolean
+
 	constructor(emitter: Phaser.GameObjects.Particles.ParticleEmitter) {
 		super(emitter)
 		this.drag = 0.99
-		this.speed = 1500
-		this.gravity = 20
 		this.swayAmplitude = Phaser.Math.Between(5, 7) // Amplitude of the sway
-		this.swayFrequency = Phaser.Math.FloatBetween(0.01, 0.03) // Frequency of the sway
-		this.rotationSpeed = Phaser.Math.FloatBetween(5, 10) // Speed of rotation
+		this.swayFrequency = Phaser.Math.FloatBetween(0.01, 0.02) // Frequency of the sway
 		this.swayPhase = Phaser.Math.FloatBetween(0, Math.PI * 2) // Initial phase of the sway
-		this.verticalSpeed = Phaser.Math.FloatBetween(0.2, 0.5) // Vertical speed
+		this.maxVeY = Number.MAX_VALUE
+		this.isDropped = false
+		this.isDown = false
 	}
 
 	update(
@@ -26,32 +25,28 @@ class FireworkParticle extends Phaser.GameObjects.Particles.Particle {
 	): boolean {
 		const result = super.update(delta, step, processors)
 		const deltaTime = delta / 1000
-		// Apply air resistance
-		const drag = 0.99
-		this.velocityX *= drag
-		this.velocityY *= drag
-
-		// Apply vertical speed and gravity to make the particle fall slower
-		this.velocityY += this.verticalSpeed
-
-		// Sway effect (horizontal oscillation)
-		this.swayPhase += this.swayFrequency
-		if (Math.abs(this.velocityY) < 20) {
-			this.velocityY = 2
-			this.velocityX = 0
-			this.x += Math.sin(this.swayPhase) * this.swayAmplitude * deltaTime
-			this.angle += 150 * deltaTime
-			this.alpha = Math.max(this.alpha - 0.5 * deltaTime, 0)
-		} else {
-			this.angle += 50 * deltaTime
+		if (this.maxVeY > this.velocityY) {
+			this.maxVeY = this.velocityY
 		}
+		this.swayPhase += this.swayFrequency
+		if (Math.abs(this.velocityY) < Math.abs(this.maxVeY) * 0.999) {
+			if (!this.isDown) {
+				this.velocityY = Phaser.Math.Linear(this.velocityY, 0, deltaTime * 3)
+			}
 
-		// Apply rotation
-		// if (this.velocityY > 0) {
-		// 	this.rotation += this.rotationSpeed + (Math.abs(this.velocityY) * delta) / 1000
-		// } else {
-		// 	this.rotation -= this.rotationSpeed + (Math.abs(this.velocityY) * delta) / 1000
-		// }
+			if (this.velocityY > 7 || this.isDown) {
+				this.alpha -= deltaTime * 0.2
+				this.velocityY = 7
+				this.isDown = true
+			}
+			this.x += Math.sin(this.swayPhase) * this.swayAmplitude * deltaTime
+			this.angle += 100 * deltaTime
+			this.isDropped = true
+		} else if (!this.isDropped) {
+			this.angle += 30 * deltaTime
+			this.velocityY *= this.drag
+		}
+		this.velocityX = Phaser.Math.Linear(this.velocityX, 0, deltaTime * 3)
 
 		return result
 	}

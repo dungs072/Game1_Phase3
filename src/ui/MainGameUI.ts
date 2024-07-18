@@ -1,9 +1,7 @@
 import { Scene } from 'phaser'
 import CONST from '../const/const'
-import FireworkParticle from '../particles/FireworkParticle'
 
 class MainGameUI extends Phaser.GameObjects.Container {
-	//private rainbowColors = [0xff69b4, 0xffa500, 0xffff00, 0x00ff00, 0x87ceeb, 0xba55d3, 0xff1493]
 	private fProgressBar: Phaser.GameObjects.Image
 	private bProgressBar: Phaser.GameObjects.Image
 	private textPanel: Phaser.GameObjects.Image
@@ -13,9 +11,6 @@ class MainGameUI extends Phaser.GameObjects.Container {
 	private dropParticle: Phaser.GameObjects.Particles.ParticleEmitter
 
 	private currentTextTween: Phaser.Tweens.Tween
-
-	// private fireworkLeft: Phaser.GameObjects.Particles.ParticleEmitter
-	// private fireworkRight: Phaser.GameObjects.Particles.ParticleEmitter
 
 	constructor(scene: Scene) {
 		super(scene, 0, 0)
@@ -88,10 +83,6 @@ class MainGameUI extends Phaser.GameObjects.Container {
 
 		this.setProgressBarValue(0)
 
-		// this.setUpLeftFireWork()
-		// this.setUpRightFirework()
-
-		//this.fireworkLeft.explode(25)
 		//this.fireworkRight.explode(25)
 	}
 	private initParticle(): void {
@@ -158,56 +149,5 @@ class MainGameUI extends Phaser.GameObjects.Container {
 			})
 		}
 	}
-	// private setUpLeftFireWork(): void {
-	// 	const config: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig = {
-	// 		lifespan: 4000,
-	// 		speed: { min: 200, max: 250 },
-	// 		accelerationY: 100,
-	// 		angle: { min: 260, max: 320 },
-	// 		gravityY: 400,
-	// 		quantity: 10,
-	// 		// alpha: { start: 1, end: 0.3 },
-	// 		scaleX: { min: 0.5, max: 1 },
-	// 		scaleY: { min: 0.5, max: 1 },
-	// 		tint: () => Phaser.Math.RND.pick(this.rainbowColors),
-	// 	}
-
-	// 	this.fireworkLeft = this.scene.add.particles(
-	// 		CONST.MAX_WIDTH * 0.1,
-	// 		CONST.MAX_HEIGHT * 0.7,
-	// 		'star',
-	// 		config
-	// 	)
-	// 	this.fireworkLeft.setDepth(40)
-	// 	this.fireworkLeft.particleClass = FireworkParticle
-	// 	this.fireworkLeft.setScale(10)
-	// 	this.fireworkLeft.stop()
-	// 	this.scene.add.existing(this.fireworkLeft)
-	// }
-	// private setUpRightFirework(): void {
-	// 	const config: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig = {
-	// 		lifespan: 2000,
-	// 		speed: { min: 100, max: 150 },
-	// 		angle: { min: 210, max: 270 },
-	// 		gravityY: 400,
-	// 		quantity: 10,
-	// 		// alpha: { start: 1, end: 0.3 },
-	// 		scaleX: { min: 0.5, max: 1 },
-	// 		scaleY: { min: 0.5, max: 1 },
-	// 		tint: () => Phaser.Math.RND.pick(this.rainbowColors),
-	// 	}
-
-	// 	this.fireworkRight = this.scene.add.particles(
-	// 		CONST.MAX_WIDTH * 0.9,
-	// 		CONST.MAX_HEIGHT * 0.7,
-	// 		'star',
-	// 		config
-	// 	)
-	// 	this.fireworkRight.setDepth(40)
-	// 	this.fireworkRight.particleClass = FireworkParticle
-	// 	this.fireworkRight.setScale(10)
-	// 	this.fireworkRight.stop()
-	// 	this.scene.add.existing(this.fireworkRight)
-	// }
 }
 export default MainGameUI

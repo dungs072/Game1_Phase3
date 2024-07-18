@@ -15,7 +15,7 @@ let CONST = {
 		MAX_TIME_TRIGGER_HINT: 5,
 		START_GRID_X: 85,
 		START_GRID_Y: 200,
-		MIN_TILES: 5, //2->7
+		MIN_TILES: 4, //2->7
 	},
 
 	TILE: {

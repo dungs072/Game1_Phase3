@@ -13,8 +13,8 @@ class NotificationUI extends Phaser.GameObjects.Container {
 
 	private timedEvent: Phaser.Time.TimerEvent
 
-	private fireworkLeft: Phaser.GameObjects.Particles.ParticleEmitter
-	private fireworkRight: Phaser.GameObjects.Particles.ParticleEmitter
+	private leftFirework: Phaser.GameObjects.Particles.ParticleEmitter
+	private rightFirework: Phaser.GameObjects.Particles.ParticleEmitter
 
 	private blackout: Phaser.GameObjects.Graphics
 	constructor(scene: Scene) {
@@ -78,8 +78,6 @@ class NotificationUI extends Phaser.GameObjects.Container {
 
 		this.setUpLeftFireWork()
 		this.setUpRightFirework()
-		//this.toggleUI(false)
-		//this.toggleUI(true)
 	}
 	public toggleUI(state: boolean, turnOffCallBack: Function | undefined = undefined): void {
 		this.setVisible(true)
@@ -103,10 +101,12 @@ class NotificationUI extends Phaser.GameObjects.Container {
 						yoyo: false,
 						onComplete: () => {
 							this.setVisible(state)
-							this.fireworkLeft.explode(25)
-							this.fireworkRight.explode(25)
+							this.setUpLeftFireWork()
+							this.setUpRightFirework()
+							this.leftFirework.explode(40)
+							this.rightFirework.explode(40)
 							this.timedEvent = this.scene.time.delayedCall(
-								3000,
+								4200,
 								() => {
 									this.toggleUI(false, turnOffCallBack)
 								},
@@ -138,53 +138,51 @@ class NotificationUI extends Phaser.GameObjects.Container {
 
 	private setUpLeftFireWork(): void {
 		const config: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig = {
-			lifespan: 2000,
+			lifespan: 4000,
 			speed: { min: 200, max: 250 },
-			angle: { min: 260, max: 320 },
-			gravityY: 400,
-			quantity: 10,
-			// alpha: { start: 1, end: 0.3 },
+			accelerationY: 100,
+			angle: { min: 260, max: 330 },
+			quantity: 40,
 			scaleX: { min: 0.5, max: 1 },
 			scaleY: { min: 0.5, max: 1 },
 			tint: () => Phaser.Math.RND.pick(this.rainbowColors),
 		}
 
-		this.fireworkLeft = this.scene.add.particles(
+		this.leftFirework = this.scene.add.particles(
 			CONST.MAX_WIDTH * 0.1,
-			CONST.MAX_HEIGHT * 0.7,
+			CONST.MAX_HEIGHT * 0.8,
 			'star',
 			config
 		)
-		this.fireworkLeft.setDepth(40)
-		this.fireworkLeft.particleClass = FireworkParticle
-		this.fireworkLeft.setScale(10)
-		this.fireworkLeft.stop()
-		this.scene.add.existing(this.fireworkLeft)
+		this.leftFirework.setDepth(40)
+		this.leftFirework.particleClass = FireworkParticle
+		this.leftFirework.setScale(10)
+		this.leftFirework.stop()
+		this.scene.add.existing(this.leftFirework)
 	}
 	public setUpRightFirework(): void {
 		const config: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig = {
-			lifespan: 2000,
+			lifespan: 4000,
 			speed: { min: 200, max: 250 },
-			angle: { min: 210, max: 270 },
-			gravityY: 400,
-			quantity: 10,
-			// alpha: { start: 1, end: 0.3 },
+			accelerationY: 100,
+			angle: { min: 210, max: 280 },
+			quantity: 40,
 			scaleX: { min: 0.5, max: 1 },
 			scaleY: { min: 0.5, max: 1 },
 			tint: () => Phaser.Math.RND.pick(this.rainbowColors),
 		}
 
-		this.fireworkRight = this.scene.add.particles(
+		this.rightFirework = this.scene.add.particles(
 			CONST.MAX_WIDTH * 0.9,
-			CONST.MAX_HEIGHT * 0.7,
+			CONST.MAX_HEIGHT * 0.8,
 			'star',
 			config
 		)
-		this.fireworkRight.setDepth(40)
-		this.fireworkRight.particleClass = FireworkParticle
-		this.fireworkRight.setScale(10)
-		this.fireworkRight.stop()
-		this.scene.add.existing(this.fireworkRight)
+		this.rightFirework.setDepth(40)
+		this.rightFirework.particleClass = FireworkParticle
+		this.rightFirework.setScale(10)
+		this.rightFirework.stop()
+		this.scene.add.existing(this.rightFirework)
 	}
 
 	public setTitleText(text: string) {

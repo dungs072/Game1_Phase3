@@ -73,6 +73,9 @@ class MatchesManager {
 
 			if (positions.length - count == 1) {
 				singlePositionIndex = positions.length - 1
+				const pos = positions[singlePositionIndex]
+				positions.slice(singlePositionIndex, 1)
+				this.tileGrid[pos.y][pos.x]?.setIsVisited(false)
 			}
 
 			// Check leftwards
@@ -93,9 +96,9 @@ class MatchesManager {
 			}
 			if (positions.length - count == 1) {
 				singlePositionIndex = positions.length - 1
-			}
-			if (singlePositionIndex < 0 && positions.length >= 5) {
+				const pos = positions[singlePositionIndex]
 				positions.slice(singlePositionIndex, 1)
+				this.tileGrid[pos.y][pos.x]?.setIsVisited(false)
 			}
 		}
 
