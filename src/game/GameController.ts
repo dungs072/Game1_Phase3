@@ -527,7 +527,17 @@ class GameController {
 			this.tileUp()
 			this.canMove = true
 			this.isDragging = false
+			this.debugTiles()
 		}
+	}
+	private debugTiles(): void {
+		console.log('the start------------------------------------------------')
+		for (let y = 0; y < this.tileGrid.length; y++) {
+			for (let x = 0; x < this.tileGrid[y].length; x++) {
+				this.tileGrid[y][x]?.debugWorldPosition()
+			}
+		}
+		console.log('the end------------------------------------------------')
 	}
 
 	private resetAndFillTile(): void {

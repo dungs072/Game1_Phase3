@@ -45,7 +45,6 @@ class MatchList {
 				this.handleBoomMatchFour(tile, tileGrid, callback)
 			}
 			if (tile.getMatchCount() >= 5 && tile.getTileType() == TileType.PACKAGE_COLOR) {
-				console.log('destroy all tiles')
 				this.matchManager.addProcessing(true)
 				this.handleBoomMatchFive(tileGrid, tile, callback)
 			}
@@ -335,7 +334,7 @@ class MatchList {
 			tile.setSpeed(0.7)
 			tile.moveToTarget(centerTile.getCoordinateX(), centerTile.getCoordinateY(), () => {
 				this.countTile++
-				tile.setVisible(false)
+				//tile.setVisible(false)
 				if (this.countTile == tempTileList.length) {
 					coordinates.forEach((coordinate) => {
 						const tempTile = tileGrid[coordinate.y][coordinate.x]

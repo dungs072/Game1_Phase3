@@ -329,5 +329,8 @@ class Tile extends Phaser.GameObjects.Sprite {
 			this.getTypeTile()
 		)
 	}
+	public debugWorldPosition(): void {
+		console.log(this.x, this.y, this)
+	}
 }
 export default Tile

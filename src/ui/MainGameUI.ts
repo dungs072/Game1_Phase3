@@ -1,5 +1,6 @@
 import { Scene } from 'phaser'
 import CONST from '../const/const'
+import ScoreManager from '../score/ScoreManager'
 
 class MainGameUI extends Phaser.GameObjects.Container {
 	private fProgressBar: Phaser.GameObjects.Image
@@ -154,9 +155,8 @@ class MainGameUI extends Phaser.GameObjects.Container {
 		this.targetScoreText.text = text
 	}
 	public setCurrentText(text: string): void {
-		if (this.currentTextTween && this.currentTextTween.isPlaying()) {
-			this.currentScoreText.text = text
-		} else {
+		this.currentScoreText.text = text
+		if (!(this.currentTextTween && this.currentTextTween.isPlaying())) {
 			this.currentTextTween = this.scene.add.tween({
 				targets: this.currentScoreText,
 				scale: 2,
@@ -164,9 +164,6 @@ class MainGameUI extends Phaser.GameObjects.Container {
 				duration: 100,
 				repeat: 0,
 				yoyo: true,
-				onComplete: () => {
-					this.currentScoreText.text = text
-				},
 			})
 		}
 	}
