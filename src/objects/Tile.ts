@@ -25,7 +25,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 			params.frame
 		)
 		this.maxScale = 0.38
-		this.speed = 0.4
+		this.speed = 0.3
 		this.scale = this.maxScale
 		this.matchCount = 1
 		this.isVisited = false
@@ -213,7 +213,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 		if (!this.scene) return
 		this.scene.tweens.add({
 			targets: this,
-			scale: 0.6,
+			scale: 0.5,
 			ease: 'sine.inout',
 			duration: 300,
 			delay: index * 50,
@@ -244,7 +244,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 			yoyo: true,
 			repeat: -1,
 			duration: 500,
-			ease: 'Power1',
+			ease: 'Quint.out',
 		})
 	}
 	public clearHighlightTween(): void {
@@ -299,7 +299,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 		this.package.play('packages')
 		this.scene.add.tween({
 			targets: this,
-			scale: 0.1,
+			scale: 0,
 			ease: 'Linear',
 			duration: 400,
 			repeat: 0,

@@ -331,21 +331,26 @@ class MatchList {
 		tempTileList.forEach((tile) => {
 			centerTile.setHorizontal(centerTile.getCoordinateX() != tile.getCoordinateX())
 			centerTile.setMatchCount(centerTile.getMatchCount() + tile.getMatchCount())
-			tile.setSpeed(0.7)
-			tile.moveToTarget(centerTile.getCoordinateX(), centerTile.getCoordinateY(), () => {
-				this.countTile++
-				//tile.setVisible(false)
-				if (this.countTile == tempTileList.length) {
-					coordinates.forEach((coordinate) => {
-						const tempTile = tileGrid[coordinate.y][coordinate.x]
-						tileGrid[coordinate.y][coordinate.x] = undefined
-						tempTile?.destroyTile()
-					})
-					if (finishCallback) {
-						finishCallback()
+			tile.moveToTarget(
+				centerTile.getCoordinateX(),
+				centerTile.getCoordinateY(),
+				() => {
+					this.countTile++
+					//tile.setVisible(false)
+					if (this.countTile == tempTileList.length) {
+						coordinates.forEach((coordinate) => {
+							const tempTile = tileGrid[coordinate.y][coordinate.x]
+							tileGrid[coordinate.y][coordinate.x] = undefined
+							tempTile?.destroyTile()
+						})
+						if (finishCallback) {
+							finishCallback()
+						}
 					}
-				}
-			})
+				},
+				undefined,
+				0.7
+			)
 		})
 		if (centerTile.isColorBoom()) {
 			if (centerTile) {

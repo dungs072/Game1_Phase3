@@ -573,7 +573,7 @@ class GameController {
 								isFilled = true
 							}
 						},
-						'Quad.out'
+						'Back.out'
 					)
 					i--
 					j--
@@ -613,7 +613,7 @@ class GameController {
 								this.checkMatches()
 							}
 						},
-						'Quad.out'
+						'Back.out'
 					)
 				}
 			}
