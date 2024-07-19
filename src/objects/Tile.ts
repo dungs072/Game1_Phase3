@@ -175,10 +175,10 @@ class Tile extends Phaser.GameObjects.Sprite {
 				Math.abs(xCoordinate * CONST.tileWidth + CONST.GAME.START_GRID_X - this.x) / this.speed
 		}
 		return this.scene.add.tween({
-			targets: this,
+			targets: [this, this.package],
 			x: CONST.tileHeight * xCoordinate + CONST.GAME.START_GRID_X,
 			y: CONST.tileHeight * yCoordinate + CONST.GAME.START_GRID_Y,
-			ease: this.customOut,
+			ease: this.customBackOut,
 			duration: duration,
 			repeat: 0,
 			yoyo: false,
@@ -188,6 +188,11 @@ class Tile extends Phaser.GameObjects.Sprite {
 				}
 			},
 		})
+	}
+	private customBackOut(v: number): number {
+		const s = 1.1
+		const t = v - 1
+		return t * t * ((s + 1) * t + s) + 1
 	}
 	private customOut(v: number): number {
 		const overshoot = 1.5
@@ -239,12 +244,11 @@ class Tile extends Phaser.GameObjects.Sprite {
 		this.highlightTween = this.scene.tweens.add({
 			targets: this,
 			alpha: { from: 0.9, to: 1 },
-			scaleX: { from: 0.25, to: this.maxScale },
-			scaleY: { from: 0.25, to: this.maxScale },
+			scale: { from: 0.25, to: this.maxScale },
 			yoyo: true,
 			repeat: -1,
-			duration: 500,
-			ease: 'Quint.out',
+			duration: 600,
+			ease: 'Linear',
 		})
 	}
 	public clearHighlightTween(): void {

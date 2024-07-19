@@ -31,5 +31,10 @@ class Utils {
 
 		return Phaser.Display.Color.GetColor(r, g, b)
 	}
+	public static customBackOut(v: number): number {
+		const s = 1.1
+		const t = v - 1
+		return t * t * ((s + 1) * t + s) + 1
+	}
 }
 export default Utils

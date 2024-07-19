@@ -564,7 +564,7 @@ class GameController {
 					this.matchesManager.addProcessing(true)
 					this.tileGrid[j][x] = undefined
 					this.tileGrid[i][x] = tileJ
-					tileJ.moveToTarget(
+					tileJ.moveToTargetBackout(
 						x,
 						i,
 						() => {
@@ -599,7 +599,7 @@ class GameController {
 					const tile = this.addTile(x, yCoordinate)
 					this.matchesManager.addProcessing(true)
 					this.tileGrid[y][x] = tile
-					tile.moveToTarget(
+					tile.moveToTargetBackout(
 						x,
 						y,
 						() => {
