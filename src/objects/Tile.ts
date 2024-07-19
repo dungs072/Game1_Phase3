@@ -13,6 +13,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 	private maxScale: number
 	private childTexture: string
 	private highlightTween: Phaser.Tweens.Tween
+	private selectingTween: Phaser.Tweens.Tween
 	private tileType: TileType
 	private package: Phaser.GameObjects.Sprite
 
@@ -194,9 +195,19 @@ class Tile extends Phaser.GameObjects.Sprite {
 		const t = v - 1
 		return t * t * ((s + 1) * t + s) + 1
 	}
-	private customOut(v: number): number {
-		const overshoot = 1.5
-		return 1 - Math.pow(1 - v, 2) * ((overshoot + 1) * (1 - v) - overshoot)
+	public selectingEffect(): void {
+		this.selectingTween = this.scene.add.tween({
+			targets: this,
+			scaleX: 0.3,
+			scaleY: 0.45,
+			duration: 400,
+			yoyo: true,
+			ease: 'Sine.easeInOut',
+			repeat: -1,
+			onComplete: () => {
+				console.log('Jump complete!')
+			},
+		})
 	}
 	public clickEffect(callback: Function | undefined = undefined): void {
 		if (!this.scene) return
@@ -248,7 +259,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 			yoyo: true,
 			repeat: -1,
 			duration: 500,
-			ease: 'Linear',
+			ease: 'Sine.easeInOut',
 		})
 	}
 	public clearHighlightTween(): void {
@@ -258,6 +269,9 @@ class Tile extends Phaser.GameObjects.Sprite {
 	}
 	public isHighlightTweenRunning(): boolean {
 		return this.highlightTween && this.highlightTween.isPlaying()
+	}
+	public isSelectingTweenRunning(): boolean {
+		return this.selectingTween && this.selectingTween.isPlaying()
 	}
 	public hoverIn(): void {
 		if (!this.scene) return
@@ -333,8 +347,9 @@ class Tile extends Phaser.GameObjects.Sprite {
 	}
 	public resetTile(): void {
 		this.angle = 0
-		this.scale = this.maxScale
+		//this.scale = this.maxScale
 		this.alpha = 1
+		//this.clearSelectingTween()
 	}
 	public isColorBoom(): boolean {
 		return this.matchCount >= 5
@@ -351,6 +366,13 @@ class Tile extends Phaser.GameObjects.Sprite {
 	}
 	public debugWorldPosition(): void {
 		console.log(this.x, this.y, this)
+	}
+
+	public clearSelectingTween(): void {
+		if (this.selectingTween) {
+			this.selectingTween.stop()
+			this.scale = this.maxScale
+		}
 	}
 }
 export default Tile

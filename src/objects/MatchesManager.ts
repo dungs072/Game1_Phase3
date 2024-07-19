@@ -122,7 +122,7 @@ class MatchesManager {
 			if (isAnchor) {
 				for (let i = 0; i < positions.length; i++) {
 					const position = positions[i]
-					//this.tileGrid[position.y][position.x]?.setTileType(TileType.PACKAGE_COLOR)
+					this.tileGrid[position.y][position.x]?.setTileType(TileType.PACKAGE_COLOR)
 				}
 			}
 
@@ -349,7 +349,7 @@ class MatchesManager {
 			if (isAnchor) {
 				for (let i = 0; i < positions.length; i++) {
 					const position = positions[i]
-					//this.tileGrid[position.y][position.x]?.setTileType(TileType.PACKAGE_COLOR)
+					this.tileGrid[position.y][position.x]?.setTileType(TileType.PACKAGE_COLOR)
 				}
 			}
 

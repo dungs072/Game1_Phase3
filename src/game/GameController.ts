@@ -25,9 +25,6 @@ class GameController {
 
 	private previousHoverTile: Tile
 
-	private bolts: Bolt[] = []
-	private boltShader: Phaser.GameObjects.Shader
-
 	// Grid with tiles
 	private tileGrid: (Tile | undefined)[][] = []
 	private hintTileGrid: Tile[][]
@@ -49,8 +46,6 @@ class GameController {
 		this.initGrid()
 		this.initGame()
 		this.initInput()
-		// this.boltShader = this.scene.add.shader('laser', 400, 300, 800, 600)
-		// this.boltShader.setUniform('resolution', [800, 600])
 
 		GameController.eventEmitter.on('resettile', () => {
 			this.resetAndFillTile()
@@ -425,13 +420,6 @@ class GameController {
 				if (!tempTile) continue
 
 				if (tempTile.hasSameChildTypeTile(tile.getChildTexture())) {
-					const bolt = {
-						startX: boomTile.x,
-						startY: boomTile.y,
-						targetX: tempTile.x,
-						targetY: tempTile.y,
-					}
-					this.bolts.push(bolt)
 					tempTile.destroyTile()
 					this.tileGrid[y][x] = undefined
 				}
@@ -441,9 +429,6 @@ class GameController {
 		boomTile.destroyTile()
 		this.tileGrid[boomTile.getCoordinateY()][boomTile.getCoordinateX()] = undefined
 		this.resetAndFillTile()
-	}
-	private drawBolts(): void {
-		this.bolts.forEach((bolt) => {})
 	}
 
 	private processHorizontalTiles(xCoordinate: number, yCoordinate: number): void {

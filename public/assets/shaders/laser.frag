@@ -49,3 +49,4 @@ void main( void ) {
     }
     gl_FragColor = vec4( color, pow(max(color,0.),1.)*0.4, pow(max(color,0.),2.)*0.15 , color);
 }
+
