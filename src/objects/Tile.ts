@@ -247,7 +247,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 			scale: { from: 0.25, to: this.maxScale },
 			yoyo: true,
 			repeat: -1,
-			duration: 600,
+			duration: 500,
 			ease: 'Linear',
 		})
 	}
@@ -312,6 +312,22 @@ class Tile extends Phaser.GameObjects.Sprite {
 			onComplete: () => {
 				this.package.destroy()
 				this.destroy()
+			},
+		})
+	}
+	public shakeTween(): void {
+		const preX = this.x
+		const preY = this.y
+		this.scene.tweens.add({
+			targets: this,
+			x: this.x + CONST.TILE.SHAKE_INTENSITY,
+			y: this.y + CONST.TILE.SHAKE_INTENSITY,
+			duration: 100,
+			ease: 'Power1',
+			yoyo: true,
+			repeat: 5,
+			onComplete: () => {
+				this.setPosition(preX, preY)
 			},
 		})
 	}

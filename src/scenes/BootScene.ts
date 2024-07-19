@@ -66,6 +66,7 @@ class BootScene extends Phaser.Scene {
 		this.load.image('package1', 'assets/anims/pack1.png')
 		this.load.image('package2', 'assets/anims/pack2.png')
 		this.load.image('package3', 'assets/anims/pack3.png')
+		this.load.glsl('laser', 'assets/shaders/laser.frag')
 	}
 	create() {
 		this.anims.create({

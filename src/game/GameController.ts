@@ -8,6 +8,7 @@ import MainGameUI from '../ui/MainGameUI'
 import ScoreManager from '../score/ScoreManager'
 import NotificationUI from '../ui/NotificationUI'
 import TileType from '../types/tileType.d'
+import Bolt from '../types/bolt.d'
 
 class GameController {
 	public static eventEmitter: Phaser.Events.EventEmitter = new Phaser.Events.EventEmitter()
@@ -23,6 +24,9 @@ class GameController {
 	private countTile: number
 
 	private previousHoverTile: Tile
+
+	private bolts: Bolt[] = []
+	private boltShader: Phaser.GameObjects.Shader
 
 	// Grid with tiles
 	private tileGrid: (Tile | undefined)[][] = []
@@ -45,6 +49,8 @@ class GameController {
 		this.initGrid()
 		this.initGame()
 		this.initInput()
+		// this.boltShader = this.scene.add.shader('laser', 400, 300, 800, 600)
+		// this.boltShader.setUniform('resolution', [800, 600])
 
 		GameController.eventEmitter.on('resettile', () => {
 			this.resetAndFillTile()
@@ -366,7 +372,7 @@ class GameController {
 				x: this.secondSelectedTile.x,
 				y: this.secondSelectedTile.y,
 				ease: 'Linear',
-				duration: 400,
+				duration: 200,
 				repeat: 0,
 				yoyo: false,
 				onUpdate: () => {
@@ -379,7 +385,7 @@ class GameController {
 				x: this.firstSelectedTile.x,
 				y: this.firstSelectedTile.y,
 				ease: 'Linear',
-				duration: 400,
+				duration: 200,
 				repeat: 0,
 				yoyo: false,
 				onUpdate: () => {
@@ -411,25 +417,33 @@ class GameController {
 		}
 	}
 	private explodeSameTileInGrid(tile: Tile, boomTile: Tile) {
+		const camera = this.scene.cameras.main
+		camera.shake(500, 0.03)
 		for (let y = 0; y < this.tileGrid.length; y++) {
 			for (let x = 0; x < this.tileGrid[y].length; x++) {
 				const tempTile = this.tileGrid[y][x]
 				if (!tempTile) continue
+
 				if (tempTile.hasSameChildTypeTile(tile.getChildTexture())) {
-					// if (tempTile.getMatchCount() == 4) {
-					// 	this.handleBoomMatchFour(tempTile)
-					// } else {
-					// 	tempTile.destroyTile()
-					// 	this.tileGrid[y][x] = undefined
-					// }
+					const bolt = {
+						startX: boomTile.x,
+						startY: boomTile.y,
+						targetX: tempTile.x,
+						targetY: tempTile.y,
+					}
+					this.bolts.push(bolt)
 					tempTile.destroyTile()
 					this.tileGrid[y][x] = undefined
 				}
 			}
 		}
+
 		boomTile.destroyTile()
 		this.tileGrid[boomTile.getCoordinateY()][boomTile.getCoordinateX()] = undefined
 		this.resetAndFillTile()
+	}
+	private drawBolts(): void {
+		this.bolts.forEach((bolt) => {})
 	}
 
 	private processHorizontalTiles(xCoordinate: number, yCoordinate: number): void {
