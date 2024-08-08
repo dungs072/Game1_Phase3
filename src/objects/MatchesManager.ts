@@ -468,11 +468,6 @@ class MatchesManager {
 			}
 		}
 	}
-	public playTween(): void {
-		this.matchLists.forEach((list) => {
-			list.playTween()
-		})
-	}
 	public refactorMatch(): void {
 		for (let i = this.matchLists.length - 1; i >= 0; i--) {
 			const tileList = this.matchLists[i].getTiles()

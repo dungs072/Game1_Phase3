@@ -4,12 +4,10 @@ import Tile from '../objects/Tile'
 
 class Shuffle {
 	private tiles: Phaser.GameObjects.Group
-	private circle: Phaser.Geom.Circle
 	private scene: Scene
 	constructor(scene: Scene) {
 		this.scene = scene
 		this.tiles = new Phaser.GameObjects.Group(scene)
-		this.circle = new Phaser.Geom.Circle(CONST.MAX_WIDTH / 2, CONST.MAX_HEIGHT / 2, 100)
 	}
 	public playShuffle(callback: Function | undefined = undefined): void {
 		const rectangle = new Phaser.Geom.Rectangle(

@@ -8,7 +8,6 @@ import MainGameUI from '../ui/MainGameUI'
 import ScoreManager from '../score/ScoreManager'
 import NotificationUI from '../ui/NotificationUI'
 import TileType from '../types/tileType.d'
-import Bolt from '../types/bolt.d'
 
 class GameController {
 	public static eventEmitter: Phaser.Events.EventEmitter = new Phaser.Events.EventEmitter()
@@ -244,7 +243,10 @@ class GameController {
 		let i = 0
 		for (let y = 0; y < CONST.gridHeight; y++) {
 			for (let x = 0; x < CONST.gridWidth; x++) {
-				this.tileGrid[y][x]?.triggerIdleTile(i)
+				if (!this.tileGrid[y][x]?.isHighlightTweenRunning()) {
+					this.tileGrid[y][x]?.triggerIdleTile(i)
+				}
+
 				i++
 
 				if (i % 12 === 0) {
@@ -268,11 +270,6 @@ class GameController {
 		this.canMove = true
 	}
 
-	/**
-	 * Add a new random tile at the specified position.
-	 * @param x
-	 * @param y
-	 */
 	private addTile(x: number, y: number): Tile {
 		// Get a random tile
 		const randomTileType: string =
@@ -287,14 +284,6 @@ class GameController {
 		})
 	}
 
-	/**
-	 * This function gets called, as soon as a tile has been pressed or clicked.
-	 * It will check, if a move can be done at first.
-	 * Then it will check if a tile was already selected before or not (if -> else)
-	 * @param pointer
-	 * @param gameobject
-	 * @param event
-	 */
 	private tileDown(pointer: Phaser.Input.Pointer, gameobject: Tile): void {
 		if (this.canMove) {
 			//this.stopIdleAndHint()
@@ -336,10 +325,6 @@ class GameController {
 			}
 		}
 	}
-	/**
-	 * This function will take care of the swapping of the two selected tiles.
-	 * It will only work, if two tiles have been selected.
-	 */
 	private swapTiles(): void {
 		if (this.firstSelectedTile && this.secondSelectedTile) {
 			this.canMove = false
@@ -431,87 +416,6 @@ class GameController {
 		this.resetAndFillTile()
 	}
 
-	private processHorizontalTiles(xCoordinate: number, yCoordinate: number): void {
-		const tempTile = this.tileGrid[yCoordinate][xCoordinate]
-		tempTile?.destroyTile()
-		let i = xCoordinate - 1
-		let j = xCoordinate + 1
-		let countTime = 1
-		while (i >= 0 || j < CONST.gridWidth) {
-			this.scene.time.delayedCall(
-				CONST.MATCH.DELAYTIME * countTime,
-				(i: number, j: number) => {
-					this.processTile(i, yCoordinate)
-					this.processTile(j, yCoordinate)
-				},
-				[i, j]
-			)
-			countTime++
-			i--
-			j++
-		}
-		this.scene.time.delayedCall(CONST.MATCH.DELAYTIME * countTime, () => {
-			for (let i = 0; i < CONST.gridWidth; i++) {
-				this.tileGrid[yCoordinate][i] = undefined
-			}
-			this.matchesManager.addProcessing(false)
-			GameController.eventEmitter.emit('resettile')
-		})
-	}
-	private processVerticalTiles(xCoordinate: number, yCoordinate: number): void {
-		const tempTile = this.tileGrid[yCoordinate][xCoordinate]
-		tempTile?.destroyTile()
-
-		let i = yCoordinate - 1
-		let j = yCoordinate + 1
-		let countTime = 1
-		while (i >= 0 || j < CONST.gridHeight) {
-			this.scene.time.delayedCall(
-				CONST.MATCH.DELAYTIME * countTime,
-				(i: number, j: number) => {
-					this.processTile(xCoordinate, i)
-					this.processTile(xCoordinate, j)
-				},
-				[i, j]
-			)
-			countTime++
-			i--
-			j++
-		}
-		this.scene.time.delayedCall(CONST.MATCH.DELAYTIME * countTime, () => {
-			for (let i = 0; i < CONST.gridHeight; i++) {
-				this.tileGrid[i][xCoordinate] = undefined
-			}
-			this.matchesManager.addProcessing(false)
-			GameController.eventEmitter.emit('resettile')
-		})
-	}
-	private processTile(xCoordinate: number, yCoordinate: number): void {
-		if (
-			xCoordinate < 0 ||
-			xCoordinate >= CONST.gridWidth ||
-			yCoordinate < 0 ||
-			yCoordinate >= CONST.gridHeight
-		)
-			return
-		const tempTile = this.tileGrid[yCoordinate][xCoordinate]
-		tempTile?.destroyTile()
-	}
-	private handleBoomMatchFour(tile: Tile): void {
-		this.matchesManager.addProcessing(true)
-		if (tile.getHorizontal()) {
-			const yCoordinate = tile.getCoordinateY()
-			const xCoordinate = tile.getCoordinateX()
-			this.processHorizontalTiles(xCoordinate, yCoordinate)
-			ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, CONST.gridWidth)
-		} else {
-			const yCoordinate = tile.getCoordinateY()
-			const xCoordinate = tile.getCoordinateX()
-			this.processVerticalTiles(xCoordinate, yCoordinate)
-			ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, CONST.gridHeight)
-		}
-	}
-
 	private checkMatches(): void {
 		if (this.matchesManager.getIsProcess()) return
 		this.canMove = true
@@ -527,23 +431,10 @@ class GameController {
 			this.tileUp()
 			this.canMove = true
 			this.isDragging = false
-			//this.debugTiles()
 		}
-	}
-	private debugTiles(): void {
-		console.log('the start------------------------------------------------')
-		for (let y = 0; y < this.tileGrid.length; y++) {
-			for (let x = 0; x < this.tileGrid[y].length; x++) {
-				this.tileGrid[y][x]?.debugWorldPosition()
-			}
-		}
-		console.log('the end------------------------------------------------')
 	}
 
 	private resetAndFillTile(): void {
-		// Loop through each column starting from the left
-		// map: x, tile bottom, blank tile
-
 		if (this.matchesManager.getIsProcess()) return
 		let isFilled = false
 		for (let x = 0; x < CONST.gridWidth; x++) {
@@ -563,18 +454,13 @@ class GameController {
 					this.matchesManager.addProcessing(true)
 					this.tileGrid[j][x] = undefined
 					this.tileGrid[i][x] = tileJ
-					tileJ.moveToTargetBackout(
-						x,
-						i,
-						() => {
-							this.matchesManager.addProcessing(false)
-							if (!this.matchesManager.getIsProcess()) {
-								this.fillTiles()
-								isFilled = true
-							}
-						},
-						'Back.out'
-					)
+					tileJ.moveToTargetBackout(x, i, () => {
+						this.matchesManager.addProcessing(false)
+						if (!this.matchesManager.getIsProcess()) {
+							this.fillTiles()
+							isFilled = true
+						}
+					})
 					i--
 					j--
 				}
@@ -598,23 +484,18 @@ class GameController {
 					const tile = this.addTile(x, yCoordinate)
 					this.matchesManager.addProcessing(true)
 					this.tileGrid[y][x] = tile
-					tile.moveToTargetBackout(
-						x,
-						y,
-						() => {
-							if (this.hasNextLevel) {
-								this.matchesManager.resetProcessingList()
-								tile.destroyTile()
-								return
-							}
+					tile.moveToTargetBackout(x, y, () => {
+						if (this.hasNextLevel) {
+							this.matchesManager.resetProcessingList()
+							tile.destroyTile()
+							return
+						}
 
-							this.matchesManager.addProcessing(false)
-							if (!this.matchesManager.getIsProcess()) {
-								this.checkMatches()
-							}
-						},
-						'Back.out'
-					)
+						this.matchesManager.addProcessing(false)
+						if (!this.matchesManager.getIsProcess()) {
+							this.checkMatches()
+						}
+					})
 				}
 			}
 		}

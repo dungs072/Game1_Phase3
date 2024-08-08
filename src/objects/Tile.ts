@@ -25,8 +25,8 @@ class Tile extends Phaser.GameObjects.Sprite {
 			params.texture,
 			params.frame
 		)
-		this.maxScale = 0.38
-		this.speed = 0.3
+		this.maxScale = CONST.TILE.MAX_SCALE
+		this.speed = CONST.TILE.SPEED
 		this.scale = this.maxScale
 		this.matchCount = 1
 		this.isVisited = false
@@ -34,13 +34,13 @@ class Tile extends Phaser.GameObjects.Sprite {
 		this.setOrigin(0.5, 0.5)
 		this.initAnimation()
 		this.initGlow()
-		this.setDepth(1)
+		this.setDepth(CONST.TILE.NORMAL_DEPTH)
 		this.scene.add.existing(this)
 
 		this.package = this.scene.add.sprite(this.x, this.y, 'package')
 		this.package.setOrigin(0.5, 0.5)
-		this.package.setDepth(2)
-		this.package.scale = 0.38
+		this.package.setDepth(CONST.TILE.PACKAGE_DEPTH)
+		this.package.scale = CONST.TILE.MAX_SCALE
 		this.scene.add.existing(this.package)
 		this.togglePackage(false)
 		this.tileType = TileType.NONE
@@ -165,8 +165,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 	public moveToTargetBackout(
 		xCoordinate: number,
 		yCoordinate: number,
-		callback: Function | undefined = undefined,
-		ease = 'Linear'
+		callback: Function | undefined = undefined
 	): Phaser.Tweens.Tween | undefined {
 		if (!this.scene) return undefined
 		let duration =
@@ -205,7 +204,7 @@ class Tile extends Phaser.GameObjects.Sprite {
 			ease: 'Sine.easeInOut',
 			repeat: -1,
 			onComplete: () => {
-				console.log('Jump complete!')
+				//console.log('Jump complete!')
 			},
 		})
 	}
@@ -252,10 +251,16 @@ class Tile extends Phaser.GameObjects.Sprite {
 		if (this.highlightTween && this.highlightTween.isPlaying()) {
 			return
 		}
+		if (this.scene.tweens.isTweening(this)) {
+			console.log('istweening')
+			return
+		}
+		this.setOrigin(0.5, 0.5)
+		this.setDepth(CONST.TILE.PACKAGE_DEPTH)
 		this.highlightTween = this.scene.tweens.add({
 			targets: this,
 			alpha: { from: 0.9, to: 1 },
-			scale: { from: 0.25, to: this.maxScale },
+			scale: 0.25,
 			yoyo: true,
 			repeat: -1,
 			duration: 500,
@@ -329,27 +334,11 @@ class Tile extends Phaser.GameObjects.Sprite {
 			},
 		})
 	}
-	public shakeTween(): void {
-		const preX = this.x
-		const preY = this.y
-		this.scene.tweens.add({
-			targets: this,
-			x: this.x + CONST.TILE.SHAKE_INTENSITY,
-			y: this.y + CONST.TILE.SHAKE_INTENSITY,
-			duration: 100,
-			ease: 'Power1',
-			yoyo: true,
-			repeat: 5,
-			onComplete: () => {
-				this.setPosition(preX, preY)
-			},
-		})
-	}
 	public resetTile(): void {
 		this.angle = 0
-		//this.scale = this.maxScale
+		this.scale = this.maxScale
 		this.alpha = 1
-		//this.clearSelectingTween()
+		this.clearSelectingTween()
 	}
 	public isColorBoom(): boolean {
 		return this.matchCount >= 5

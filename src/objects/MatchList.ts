@@ -11,7 +11,6 @@ class MatchList {
 	private countTile: number
 	public centerTile: Tile
 	private scene: Scene
-	private timedEvent: Phaser.Time.TimerEvent
 	private matchManager: MatchesManager
 	private tileGrid: (Tile | undefined)[][]
 	constructor(scene: Scene, matchManager: MatchesManager, tileGrid: (Tile | undefined)[][]) {
@@ -30,11 +29,6 @@ class MatchList {
 	}
 	public addTile(tile: Tile): void {
 		this.tiles.push(tile)
-	}
-	public playTween(): void {
-		this.tiles.forEach((tile) => {
-			tile.test()
-		})
 	}
 	public destroyAllTiles(tileGrid: (Tile | undefined)[][], callback: Function): void {
 		ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, this.tiles.length * 3)
@@ -80,7 +74,7 @@ class MatchList {
 		let j = xCoordinate + 1
 		let countTime = 1
 		while (i >= 0 || j < CONST.gridWidth) {
-			this.timedEvent = this.scene.time.delayedCall(
+			this.scene.time.delayedCall(
 				CONST.MATCH.DELAYTIME * countTime,
 				(i: number, j: number) => {
 					this.processTile(i, yCoordinate)
@@ -110,7 +104,7 @@ class MatchList {
 		let j = yCoordinate + 1
 		let countTime = 1
 		while (i >= 0 || j < CONST.gridHeight) {
-			this.timedEvent = this.scene.time.delayedCall(
+			this.scene.time.delayedCall(
 				CONST.MATCH.DELAYTIME * countTime,
 				(i: number, j: number) => {
 					this.processTile(xCoordinate, i)
@@ -166,6 +160,7 @@ class MatchList {
 			ScoreManager.Events.emit(CONST.SCORE.ADD_SCORE_EVENT, CONST.gridHeight)
 		}
 	}
+
 	private handleBoomMatchFive(
 		tileGrid: (Tile | undefined)[][],
 		centerTile: Tile | undefined = undefined,
@@ -221,7 +216,7 @@ class MatchList {
 						break
 					}
 
-					this.timedEvent = this.scene.time.delayedCall(
+					this.scene.time.delayedCall(
 						CONST.MATCH.DELAYTIME * countTime,
 						(i: number, j: number) => {
 							tileGrid[i][j] = undefined
